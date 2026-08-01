@@ -1,6 +1,6 @@
 import LobbyRoom from './LobbyRoom'
 import CrewMember from './CrewMember'
-import { seatFor, crewScale, seatPitch, AIRLOCK } from '../game/layout'
+import { seatFor, crewScale, seatPitch, castFor, AIRLOCK } from '../game/layout'
 import { CREW_COLORS } from '../game/constants'
 import { displayName } from '../game/state'
 
@@ -29,13 +29,21 @@ export default function Lobby({
   pickMode,
   showNames,
   answeredById,
+  displayCap,
   onPick,
 }) {
+  // The room seats a cast, not the whole roster — everyone still draws from the
+  // full pool. Whoever is spotlit, caught or answering is forced on deck so a
+  // selection is never invisible.
+  const cast = castFor(students, displayCap, [spotlightId, caughtId, answeredById])
+  const aboardCount = students.filter((s) => !s.ejected).length
+  const offDeck = aboardCount - cast.length
+
   const flags = (student, i) => {
     const isSpot = student.id === spotlightId && phase === 'spinning'
     const isCaught = student.id === caughtId && phase !== 'lobby'
     return {
-      slot: seatFor(i, students.length),
+      slot: seatFor(i, cast.length),
       isSpot,
       isCaught,
       isFlying: launching && student.id === caughtId,
@@ -54,9 +62,9 @@ export default function Lobby({
         <div
           className="deck-layers"
           style={(() => {
-            const pitch = seatPitch(students.length)
+            const pitch = seatPitch(cast.length)
             return {
-              '--crew-w': `${crewScale(students.length)}cqw`,
+              '--crew-w': `${crewScale(cast.length)}cqw`,
               // Cap tag width at the seat pitch (less a gap) so neighbouring
               // tags butt up but never overlap, whatever the names are.
               '--tag-max': `${(pitch * 0.94).toFixed(2)}cqw`,
@@ -69,10 +77,7 @@ export default function Lobby({
         >
         {/* ---------- layer 1: artwork ---------- */}
         <div className="crew-layer">
-          {students.map((student, i) => {
-            // Ejected crew are outside the craft. We still walk the full list
-            // so seat indices stay put — their chair simply stays empty.
-            if (student.ejected) return null
+          {cast.map((student, i) => {
             const { slot, isSpot, isCaught, isFlying, isAnswerer } = flags(student, i)
             const pos = isFlying ? AIRLOCK : slot
 
@@ -130,8 +135,7 @@ export default function Lobby({
             .filter(Boolean)
             .join(' ')}
         >
-          {students.map((student, i) => {
-            if (student.ejected) return null
+          {cast.map((student, i) => {
             const { slot, isSpot, isCaught, isFlying, isAnswerer } = flags(student, i)
 
             const cls = [
@@ -180,6 +184,14 @@ export default function Lobby({
           })}
         </div>
         </div>
+
+        {/* Be honest that the room is a cast, not the whole class — otherwise
+            "why isn't my student in there?" looks like a bug. */}
+        {offDeck > 0 && (
+          <span className="off-deck" title={`${offDeck} more crew are in the pool but not seated`}>
+            +{offDeck} more in pool
+          </span>
+        )}
       </div>
 
       {students.length === 0 && (

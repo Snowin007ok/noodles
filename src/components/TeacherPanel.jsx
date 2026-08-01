@@ -187,6 +187,23 @@ function ControlTab({ state, dispatch, actions, clock }) {
         </p>
       )}
 
+      {/* At-a-glance counters, so the teacher never has to leave Control to
+          know where the session stands. */}
+      <div className="mini-stats">
+        <div className="mini">
+          <strong>{state.rounds.filter((r) => r.status !== 'pending').length}</strong>
+          <span>Done</span>
+        </div>
+        <div className="mini mini--cool">
+          <strong>{remaining}</strong>
+          <span>In pool</span>
+        </div>
+        <div className="mini mini--bad">
+          <strong>{state.students.length - eligible}</strong>
+          <span>Ejected</span>
+        </div>
+      </div>
+
       <hr className="rule" />
 
       <div className="field">
@@ -206,6 +223,8 @@ function ControlTab({ state, dispatch, actions, clock }) {
             min="0"
             max="100"
             value={Math.round(state.audio.volume * 100)}
+            // Drives the filled portion of the track (see .slider input).
+            style={{ '--fill': `${Math.round(state.audio.volume * 100)}%` }}
             onChange={(e) => actions.setAudio({ volume: Number(e.target.value) / 100 })}
             disabled={!state.audio.enabled}
           />
@@ -218,6 +237,28 @@ function ControlTab({ state, dispatch, actions, clock }) {
             onChange={(e) => dispatch({ type: 'names/set', value: e.target.checked })}
           />
           <span>Show all names</span>
+        </label>
+
+        {/* Seats in the room. Selection always uses the FULL roster — this only
+            controls how many characters are drawn, so a big class doesn't turn
+            the lobby into a crowd of smudges. */}
+        <label className="slider">
+          <span>Crew shown</span>
+          <input
+            type="range"
+            min="6"
+            max="45"
+            step="1"
+            value={state.displayCap === 0 ? 45 : Math.min(45, state.displayCap)}
+            style={{
+              '--fill': `${(((state.displayCap === 0 ? 45 : Math.min(45, state.displayCap)) - 6) / 39) * 100}%`,
+            }}
+            onChange={(e) => {
+              const v = Number(e.target.value)
+              dispatch({ type: 'displayCap/set', value: v >= 45 ? 0 : v })
+            }}
+          />
+          <i>{state.displayCap === 0 ? 'All' : state.displayCap}</i>
         </label>
         <label className="switch">
           <input

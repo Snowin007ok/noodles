@@ -261,6 +261,45 @@
   gap: 10px;
 }
 
+/* Compact counter row — keeps the Control tab from trailing off into dead
+   space below the buttons. */
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.mini {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  padding: var(--s2) var(--s1);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+.mini strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--text);
+}
+
+.mini span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mini--cool strong { color: var(--cyan); }
+.mini--bad strong { color: var(--red); }
+
 .switch {
   display: flex;
   align-items: center;
@@ -271,12 +310,51 @@
   user-select: none;
 }
 
+/* Real toggle switches. A default checkbox is the single loudest "unstyled
+   web form" tell in an otherwise game-styled panel. */
 .switch input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--cyan);
-  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 44px;
+  height: 25px;
+  margin: 0;
   flex: 0 0 auto;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #333c60, #222a45);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+/* the knob */
+.switch input::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #dfe6fb, #97a3c8);
+  border: 2px solid var(--ink);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  transition: transform 180ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.switch input:checked {
+  background: linear-gradient(180deg, #58e0ff, #1f86b8);
+}
+
+.switch input:checked::after {
+  transform: translateX(19px);
+  background: linear-gradient(180deg, #ffffff, #cfe9f8);
+}
+
+.switch input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .switch span {
@@ -292,10 +370,45 @@
   font-weight: 600;
 }
 
+/* Chunky volume track to match the buttons. */
 .slider input {
+  appearance: none;
+  -webkit-appearance: none;
   width: 100%;
-  accent-color: var(--amber);
+  height: 12px;
+  margin: 0;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber) 0%, var(--amber) var(--fill, 80%), #222a45 var(--fill, 80%), #222a45 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+}
+
+.slider input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff5cf, #e8b62b);
+  border: 2.5px solid var(--ink);
+  box-shadow: 0 2px 0 var(--ink), 0 3px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.slider input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff5cf, #e8b62b);
+  border: 2.5px solid var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
+  cursor: pointer;
+}
+
+.slider input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .slider i {

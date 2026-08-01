@@ -75,6 +75,10 @@ export function initialState() {
     // 45 name tags at once is noise. Off by default: the room stays clean and
     // only the name that matters right now is shown.
     showNames: false,
+    // How many crew are SEATED in the room. The roster and the pool are
+    // unaffected — a class of 45 still draws from all 45; the lobby just shows
+    // a tidy cast instead of 45 shrunken characters. 0 = show everyone.
+    displayCap: 16,
   }
 }
 
@@ -88,7 +92,32 @@ export function load() {
     if (saved.version !== 1 || !Array.isArray(saved.students)) return initialState()
     // Never restore mid-animation — a refresh should land in a stable lobby.
     const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
-    return { ...initialState(), ...saved, phase, spotlightId: null }
+    const base = initialState()
+    const merged = { ...base, ...saved, phase, spotlightId: null }
+
+    /* A session saved by an older build can carry a missing or malformed
+       numeric field, which reaches an <input value> as NaN and breaks the
+       control. Coerce anything numeric back to a sane value rather than
+       trusting whatever is in storage. */
+    const num = (v, fallback, min, max) =>
+      typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback
+
+    merged.displayCap = num(merged.displayCap, base.displayCap, 0, 500)
+    merged.currentRound = num(merged.currentRound, 1, 1, TOTAL_ROUNDS)
+    merged.audio = {
+      enabled: typeof merged.audio?.enabled === 'boolean' ? merged.audio.enabled : true,
+      volume: num(merged.audio?.volume, 0.8, 0, 1),
+    }
+    merged.students = (Array.isArray(merged.students) ? merged.students : []).map((s) => ({
+      ...s,
+      points: undefined,
+      timesSelected: num(s?.timesSelected, 0, 0, 1e6),
+      participated: Boolean(s?.participated),
+      ejected: Boolean(s?.ejected),
+    }))
+    merged.pool = Array.isArray(merged.pool) ? merged.pool : []
+
+    return merged
   } catch {
     return initialState()
   }
@@ -318,6 +347,9 @@ export function reducer(state, action) {
 
     case 'motion/set':
       return { ...state, reducedMotion: action.value }
+
+    case 'displayCap/set':
+      return { ...state, displayCap: Math.max(0, action.value) }
 
     case 'names/set':
       return { ...state, showNames: action.value }

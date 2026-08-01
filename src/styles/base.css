@@ -265,6 +265,13 @@ kbd,
   gap: var(--s2);
 }
 
+/* Paired danger buttons sit side by side in a narrow rail; let their labels
+   shrink a little rather than wrapping onto two lines. */
+.btn-row .btn {
+  font-size: clamp(0.72rem, 0.85vw, 0.92rem);
+  padding-inline: var(--s2);
+}
+
 /* ---- focus ---- */
 
 .btn:focus-visible,

@@ -364,6 +364,7 @@ export default function App() {
           launching={launching}
           pickMode={pickMode}
           showNames={state.showNames}
+          displayCap={state.displayCap}
           answeredById={round?.answeredById}
           onPick={pickAnswerer}
         />

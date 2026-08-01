@@ -67,4 +67,25 @@ check('spun volunteer round stays pending', z.rounds[1].status === 'pending', z.
 const failed = results.filter(r => !r.pass)
 for (const r of results) console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}${r.detail?'  — '+r.detail:''}`)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
-process.exit(failed.length ? 1 : 0)
+if (failed.length) process.exitCode = 1
+
+/* --- migration: a session saved by an older build must not produce NaN --- */
+import { load as _load } from '../src/game/state.js'
+const store = {}
+globalThis.localStorage = {
+  getItem: (k) => store[k] ?? null,
+  setItem: (k, v) => { store[k] = v },
+}
+// Simulate an old save: no displayCap, no ejected flag, legacy points field.
+store['noodles.session.v1'] = JSON.stringify({
+  version: 1, currentRound: 3, phase: 'lobby',
+  students: [{ id: 'a', name: 'Ana', colorId: 'lime', points: 4, participated: true }],
+  pool: ['a'], rounds: [], audio: { enabled: true },
+})
+const m = _load()
+const ok = Number.isFinite(m.displayCap) && Number.isFinite(m.audio.volume)
+  && Number.isFinite(m.currentRound) && m.students[0].ejected === false
+  && Number.isFinite(m.students[0].timesSelected)
+console.log(`${ok ? 'PASS' : 'FAIL'}  legacy save migrates without NaN` +
+  `  — displayCap=${m.displayCap} volume=${m.audio.volume} ejected=${m.students[0].ejected}`)
+if (!ok) process.exitCode = 1

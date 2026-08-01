@@ -518,6 +518,26 @@
 
 /* ---------------- empty state ---------------- */
 
+/* "+N more in pool" — sits in the deck's bottom-right corner. */
+.off-deck {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 60;
+  padding: 5px 12px;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(10, 14, 28, 0.9);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-size: clamp(9px, 1.05cqw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 0 var(--ink);
+}
+
 .stage-empty {
   position: absolute;
   left: 50%;

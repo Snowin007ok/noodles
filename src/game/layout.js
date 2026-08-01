@@ -137,6 +137,30 @@ export function seatFor(index, total) {
  * ASPECT), so dividing by ASPECT converts a spacing back into deck-width
  * percent — the axis a tag actually grows along.
  */
+/**
+ * Choose which crew actually appear in the room.
+ *
+ * The roster and the cast are deliberately separate: a class of 45 all stands
+ * in the pool and can be drawn, but 45 characters on screen is visual noise
+ * and shrinks everyone to a smudge. So we seat a fixed-size cast and let the
+ * rest wait "off-deck" — they are still fully eligible for selection.
+ *
+ * Rules:
+ *   · ejected crew are gone entirely
+ *   · whoever is currently spotlit or caught is ALWAYS on deck, so a pick is
+ *     never invisible
+ *   · otherwise take roster order, which keeps seats stable between rounds
+ */
+export function castFor(students, cap, focusIds = []) {
+  const aboard = students.filter((s) => !s.ejected)
+  if (!cap || aboard.length <= cap) return aboard
+
+  const focus = aboard.filter((s) => focusIds.includes(s.id))
+  const rest = aboard.filter((s) => !focusIds.includes(s.id))
+  // Focused crew take the front seats; the rest fill what's left in order.
+  return [...focus, ...rest.slice(0, Math.max(0, cap - focus.length))]
+}
+
 export function seatPitch(total) {
   const n = Math.max(1, total)
   const { r1, r2, r3 } = allocate(n)
