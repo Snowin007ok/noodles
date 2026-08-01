@@ -1,0 +1,561 @@
+/* ==========================================================
+   NOODLES — the lobby stage
+   ========================================================== */
+
+.stage-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ---------------- HUD strip ---------------- */
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) clamp(16px, 1.8vw, 30px);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, #2b3457 0%, #161c33 100%);
+  box-shadow:
+    0 var(--drop) 0 var(--ink),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  font-size: clamp(0.74rem, 1.05vw, 1.05rem);
+  flex: 0 0 auto;
+}
+
+.hud-round strong,
+.hud-pool strong {
+  color: var(--amber);
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 0 3px;
+}
+
+.hud-mode {
+  padding: var(--s2) var(--s5);
+  border-radius: 999px;
+  background: rgba(79, 227, 255, 0.13);
+  border: 2px solid rgba(79, 227, 255, 0.42);
+  color: var(--cyan);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-mode--open {
+  background: rgba(255, 210, 61, 0.14);
+  border-color: rgba(255, 210, 61, 0.5);
+  color: var(--amber);
+  animation: openPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes openPulse {
+  50% {
+    box-shadow: 0 0 22px rgba(255, 210, 61, 0.45);
+  }
+}
+
+.hud-pool {
+  color: var(--text-dim);
+}
+
+/* ---------------- stage box ---------------- */
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-lg);
+  /* Own stacking context: keeps the crew/tag z-indexes (up to 300) contained
+     so the banner and question card can sit above the whole lobby. */
+  z-index: 0;
+}
+
+/* Matches the room SVG's 1200x800 viewBox, letterboxed inside the stage.
+   Both the artwork and the crew layer fill this box, so a crew member at
+   "50% 51%" is genuinely at the centre of the room at any screen size. */
+/* Height-driven with a max-width clamp, so the deck fits inside the stage in
+   BOTH directions — a percentage max-height on a grid item is indefinite and
+   was letting the room overflow and clip the bottom row of crew. */
+.deck {
+  position: relative;
+  aspect-ratio: 1200 / 800;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 auto;
+  /* Clips the ejected crew member as they clear the hull — they vanish into
+     space rather than sailing across the teacher's panel. */
+  overflow: hidden;
+  border-radius: var(--r-lg);
+}
+
+.room {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 24px 50px rgba(0, 0, 0, 0.6));
+}
+
+/* Two stacked layers over the room: artwork underneath, name tags above.
+   `--crew-w` drives both so the tag always lands just below the character.
+
+   The container lives on this inner wrapper rather than on .deck itself:
+   inline-size containment would stop .deck's `width: auto` from deriving off
+   its aspect-ratio, and the room would letterbox inside a taller box. */
+.deck-layers {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  pointer-events: none;
+  /* Default crew scale; Lobby overrides this inline as the class grows. */
+  --crew-w: 6.6cqw;
+}
+
+/* Sized in container units, not viewport units: a crew member is a fixed
+   fraction of the ROOM, so the lobby scales as one picture from a narrow pane
+   up to a classroom projector instead of the characters swelling out of the
+   hull on small screens. */
+.crew-layer,
+.tag-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Inherits --crew-w from .deck-layers; both derive from it so the tag always
+     lands just under the character whatever the class size. */
+  --art-h: calc(var(--crew-w) * 1.15);
+  --tag-fs: clamp(7px, calc(var(--crew-w) * 0.29), 19px);
+}
+
+.tag-layer--picking .tag,
+.crew-layer .crew[onclick] {
+  pointer-events: auto;
+}
+
+/* ---------------- room ambience ---------------- */
+
+.holo-glow {
+  transform-origin: 600px 400px;
+  animation: holoBreath 4.5s ease-in-out infinite;
+}
+
+@keyframes holoBreath {
+  50% {
+    transform: scale(1.09);
+    opacity: 0.75;
+  }
+}
+
+.holo-ring {
+  transform-origin: 600px 400px;
+  animation: spinCw 22s linear infinite;
+}
+
+.holo-ring--b {
+  animation: spinCcw 15s linear infinite;
+}
+
+@keyframes spinCw {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinCcw {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.floor-strips rect {
+  animation: stripGlow 5s ease-in-out infinite;
+}
+
+@keyframes stripGlow {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.screen {
+  animation: flicker 3.4s steps(2, end) infinite;
+}
+.screen--1 { animation-delay: 0.6s; }
+.screen--2 { animation-delay: 1.3s; }
+.screen--3 { animation-delay: 2.1s; }
+
+@keyframes flicker {
+  0%, 92%, 100% { opacity: 1; }
+  95% { opacity: 0.55; }
+}
+
+.star {
+  animation: twinkle 3s ease-in-out infinite;
+}
+.star--1 { animation-delay: 0.9s; }
+.star--2 { animation-delay: 1.8s; }
+
+@keyframes twinkle {
+  50% { opacity: 0.25; }
+}
+
+/* ---------------- airlock ---------------- */
+
+.airlock-door {
+  transition: transform 720ms cubic-bezier(0.6, -0.05, 0.25, 1.2);
+}
+
+.room--airlock-open .airlock-door--top {
+  transform: translateY(-112px);
+}
+
+.room--airlock-open .airlock-door--bottom {
+  transform: translateY(112px);
+}
+
+.beacon {
+  opacity: 0.25;
+}
+
+.room--alarm .beacon {
+  animation: beaconFlash 0.55s steps(2, end) infinite;
+}
+
+.beacon--delay {
+  animation-delay: 0.27s !important;
+}
+
+@keyframes beaconFlash {
+  0%, 49% { opacity: 1; filter: drop-shadow(0 0 12px var(--red)); }
+  50%, 100% { opacity: 0.2; filter: none; }
+}
+
+/* ---------------- alarm wash ---------------- */
+
+.alarm-layer {
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.room--alarm .alarm-layer {
+  animation: alarmWash 0.75s ease-in-out infinite;
+}
+
+@keyframes alarmWash {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.strobes circle {
+  opacity: 0;
+}
+
+.room--alarm .strobes circle {
+  animation: strobe 0.55s steps(2, end) infinite;
+  filter: drop-shadow(0 0 18px var(--red));
+}
+
+.room--alarm .strobes circle:nth-child(2),
+.room--alarm .strobes circle:nth-child(3) {
+  animation-delay: 0.27s;
+}
+
+@keyframes strobe {
+  0%, 49% { opacity: 0.95; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ==========================================================
+   Crew members
+   ========================================================== */
+
+.crew {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  transition:
+    left 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
+    top 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, left, top;
+}
+
+.tag-layer--picking ~ * .crew,
+.tag-layer--picking .tag {
+  cursor: pointer;
+}
+
+.crew-art {
+  display: block;
+  animation: bob var(--bob-dur, 3.4s) ease-in-out var(--bob-delay, 0s) infinite;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+  50% { transform: translateY(-7px) rotate(1.2deg); }
+}
+
+.crew-svg {
+  width: var(--crew-w);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+}
+
+.crew-bead {
+  animation: beadGlow 2.6s ease-in-out infinite;
+}
+
+@keyframes beadGlow {
+  50% { filter: drop-shadow(0 0 6px #ffe27a); }
+}
+
+/* ---- name tags (own layer, always above all artwork) ---- */
+
+.tag {
+  position: absolute;
+  /* Anchored on the slot, nudged down so it sits just under the character. */
+  transform: translate(-50%, calc(var(--art-h) * 0.42));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  /* Hidden by default — see Lobby.jsx. Kept in the DOM (not unmounted) so the
+     pick-mode buttons stay focusable and the reveal can animate. */
+  opacity: 0;
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+}
+
+/* All names on: teacher toggle, or picking a volunteer. */
+.tag-layer--names .tag,
+/* …and always for whoever is in the spotlight right now. */
+.tag--spotlight,
+.tag--caught,
+.tag--answerer,
+.tag:hover,
+.tag:focus-visible {
+  opacity: 1;
+}
+
+.tag--hidden {
+  opacity: 0 !important;
+}
+
+.tag-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 15ch;
+  padding: 0.25em 0.75em;
+  border: 2.5px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(12, 15, 30, 0.94);
+  font-size: var(--tag-fs);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 3px 0 var(--ink);
+  transition: background 200ms ease, color 200ms ease, box-shadow 200ms ease;
+}
+
+.tag-tick {
+  color: var(--green);
+  font-size: 0.9em;
+}
+
+/* ---- already participated: dim slightly, keep them in the room ---- */
+
+/* Already had a turn: still aboard, still seated, just visibly "done" — this
+   is the only cue left once name tags are hidden, so it has to read clearly. */
+.crew--done .crew-art {
+  opacity: 0.5;
+  filter: saturate(0.35);
+}
+
+.tag--done .tag-name {
+  background: rgba(24, 58, 42, 0.94);
+}
+
+/* ---- spotlight during the spin ---- */
+
+.crew--spotlight {
+  transform: translate(-50%, -50%) scale(1.22);
+}
+
+/* With every other name hidden, the live one can afford to be much bigger. */
+.tag--spotlight {
+  transform: translate(-50%, calc(var(--art-h) * 0.62)) scale(1.6);
+}
+
+.tag--spotlight .tag-name {
+  background: var(--cyan);
+  color: #04202b;
+  box-shadow: 0 3px 0 var(--ink), 0 0 26px var(--cyan);
+}
+
+.crew--spotlight .crew-svg {
+  filter: drop-shadow(0 0 16px var(--cyan)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ---- locked in ---- */
+
+.crew--caught {
+  transform: translate(-50%, -50%) scale(1.38);
+}
+
+.tag--caught {
+  transform: translate(-50%, calc(var(--art-h) * 0.78)) scale(2);
+}
+
+.crew--caught .crew-art {
+  animation: caughtShake 0.42s ease-in-out 3;
+}
+
+@keyframes caughtShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-5px) rotate(-5deg); }
+  75% { transform: translateX(5px) rotate(5deg); }
+}
+
+.tag--caught .tag-name {
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--ink), 0 0 30px var(--red);
+}
+
+.crew--caught .crew-svg {
+  filter: drop-shadow(0 0 22px var(--red)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ---- the launch: pulled out through the airlock, playful tumble ---- */
+
+.crew--flying {
+  transition:
+    left 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
+    top 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
+    transform 1150ms ease-in;
+  transform: translate(-50%, -50%) scale(0.4) rotate(420deg);
+  opacity: 0.9;
+}
+
+.crew--flying .crew-art {
+  animation: tumble 0.55s linear infinite;
+}
+
+@keyframes tumble {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- volunteer-round pick mode ---- */
+
+.tag-layer--picking .tag:hover .tag-name,
+.tag-layer--picking .tag:focus-visible .tag-name {
+  background: var(--amber);
+  color: #2a1d02;
+}
+
+.tag-layer--picking .tag:hover {
+  transform: translate(-50%, calc(var(--art-h) * 0.42)) scale(1.12);
+}
+
+.crew--answerer {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.tag--answerer {
+  transform: translate(-50%, calc(var(--art-h) * 0.55)) scale(1.14);
+}
+
+.tag--answerer .tag-name {
+  background: var(--amber);
+  color: #2a1d02;
+  box-shadow: 0 3px 0 var(--ink), 0 0 26px rgba(255, 210, 61, 0.8);
+}
+
+.crew--answerer .crew-svg {
+  filter: drop-shadow(0 0 18px var(--amber)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ---------------- empty state ---------------- */
+
+.stage-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 80;
+  display: grid;
+  gap: var(--s2);
+  justify-items: center;
+  text-align: center;
+  width: min(90%, 620px);
+  padding: var(--s6) var(--s5);
+  border: 4px dashed var(--line);
+  border-radius: var(--r-xl);
+  background: rgba(9, 12, 24, 0.96);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.stage-empty strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.6vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+}
+
+.stage-empty span {
+  font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.stage-empty b {
+  color: var(--cyan);
+}
+
+.stage-empty--out {
+  border-color: rgba(255, 77, 99, 0.55);
+}
+
+.stage-empty--out strong {
+  color: var(--red);
+}
+
+/* ---------------- narrow / portrait ---------------- */
+
+@media (max-width: 1000px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(240px, 42vh);
+    overflow: auto;
+  }
+  .stage-wrap {
+    min-height: 46vh;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "noodles",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "esbuild scratchpad/edge.mjs --bundle --platform=node --format=esm --outfile=node_modules/.cache/edge.mjs --log-level=error && node node_modules/.cache/edge.mjs && esbuild scratchpad/fair.mjs --bundle --platform=node --format=esm --outfile=node_modules/.cache/fair.mjs --log-level=error && node node_modules/.cache/fair.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/fredoka": "^5.3.0",
+    "@fontsource-variable/nunito": "^5.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,362 @@
+/* ==========================================================
+   NOODLES — foundations
+   Self-hosted fonts (no CDN): Fredoka for display/UI chrome,
+   Nunito for body copy and long question text.
+   ========================================================== */
+
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
+
+:root {
+  /* ---- surface ---- */
+  --ink: #080a14;
+  --hull: #12162a;
+  --panel: #161c33;
+  --panel-2: #202844;
+  --panel-3: #2a3355;
+  --line: #313c62;
+  --line-soft: #26304f;
+
+  /* ---- text ---- */
+  --text: #eaf0ff;
+  --text-dim: #98a5c8;
+  --text-faint: #6b779b;
+
+  /* ---- accents ---- */
+  --cyan: #4fe3ff;
+  --cyan-deep: #1f86b8;
+  --amber: #ffd23d;
+  --amber-deep: #c98f10;
+  --green: #3ce39a;
+  --green-deep: #1a8f5e;
+  --red: #ff4d63;
+  --red-deep: #b81d31;
+  --orange: #ff9440;
+  --orange-deep: #d1560f;
+  --violet: #b478ff;
+
+  /* ---- spacing scale (4px base) ---- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 22px;
+  --s6: 30px;
+  --s7: 40px;
+
+  /* ---- radii ---- */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+
+  /* ---- chunky game border + drop ---- */
+  --bw: 3px;
+  --drop: 5px;
+
+  /* ---- type ---- */
+  --font-display: 'Fredoka Variable', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Nunito Variable', 'Trebuchet MS', system-ui, sans-serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text);
+  background:
+    radial-gradient(1400px 800px at 25% -15%, #202a55 0%, transparent 62%),
+    radial-gradient(1100px 700px at 115% 115%, #2a1a4a 0%, transparent 58%),
+    var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Faint starfield behind everything */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 68% 14%, #cfe6ff 50%, transparent 51%),
+    radial-gradient(1.8px 1.8px at 84% 62%, #fff 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 26% 78%, #bcd8ff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 47% 42%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 92% 30%, #e6f0ff 50%, transparent 51%),
+    radial-gradient(1.3px 1.3px at 8% 55%, #fff 50%, transparent 51%),
+    radial-gradient(1.1px 1.1px at 58% 88%, #d8e8ff 50%, transparent 51%);
+  opacity: 0.55;
+}
+
+h1,
+h2,
+h3,
+.tab,
+.btn,
+kbd,
+.hud,
+.chip,
+.stat span,
+.sub,
+.card-label {
+  font-family: var(--font-display);
+}
+
+/* ==========================================================
+   Layout shell — fills the display edge to edge
+   ========================================================== */
+
+.app {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 460px);
+  gap: clamp(10px, 1vw, 20px);
+  height: 100%;
+  padding: clamp(10px, 1vw, 20px);
+}
+
+/* ==========================================================
+   Buttons — chunky, tactile, arcade
+   ========================================================== */
+
+.btn {
+  --btn-face: var(--panel-2);
+  --btn-edge: var(--panel);
+  --btn-ink: var(--text);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 50px;
+  padding: var(--s3) var(--s4);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--btn-face) 0%, var(--btn-edge) 100%);
+  color: var(--btn-ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(0.86rem, 1vw, 1.02rem);
+  letter-spacing: 0.03em;
+  text-align: center;
+  cursor: pointer;
+  /* hard drop = the "block sitting on the board" look */
+  box-shadow:
+    0 var(--drop) 0 var(--ink),
+    0 calc(var(--drop) + 6px) 16px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.08s ease,
+    filter 0.14s ease,
+    box-shadow 0.08s ease;
+}
+
+/* glossy top bevel */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 3px 3px auto 3px;
+  height: 42%;
+  border-radius: calc(var(--r-md) - 6px) calc(var(--r-md) - 6px) 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.14) saturate(1.05);
+  transform: translateY(-1px);
+  box-shadow:
+    0 calc(var(--drop) + 1px) 0 var(--ink),
+    0 calc(var(--drop) + 9px) 20px rgba(0, 0, 0, 0.55);
+}
+
+/* press it into the board */
+.btn:active:not(:disabled) {
+  transform: translateY(var(--drop));
+  box-shadow:
+    0 0 0 var(--ink),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.btn:disabled {
+  opacity: 0.34;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+  box-shadow: 0 var(--drop) 0 var(--ink);
+}
+
+.btn--hero {
+  --btn-face: var(--orange);
+  --btn-edge: var(--orange-deep);
+  --btn-ink: #2b1305;
+  min-height: clamp(62px, 8vh, 82px);
+  font-size: clamp(1rem, 1.45vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: var(--r-lg);
+}
+
+.btn--hero::before {
+  border-radius: calc(var(--r-lg) - 6px) calc(var(--r-lg) - 6px) 40% 40%;
+}
+
+.btn--reveal {
+  --btn-face: #5ad2ff;
+  --btn-edge: var(--cyan-deep);
+  --btn-ink: #052436;
+}
+
+.btn--good {
+  --btn-face: #58ecac;
+  --btn-edge: var(--green-deep);
+  --btn-ink: #04291a;
+}
+
+.btn--warn {
+  --btn-face: #ffdc7a;
+  --btn-edge: var(--amber-deep);
+  --btn-ink: #2e2003;
+}
+
+.btn--danger {
+  --btn-face: #ff7183;
+  --btn-edge: var(--red-deep);
+  --btn-ink: #2e0509;
+}
+
+.btn--ghost {
+  --btn-face: rgba(255, 255, 255, 0.07);
+  --btn-edge: rgba(255, 255, 255, 0.03);
+  --btn-ink: var(--text-dim);
+  border-color: var(--line);
+  font-weight: 600;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.55);
+}
+
+.btn--ghost::before {
+  opacity: 0.35;
+}
+
+.btn--ghost:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.55);
+}
+
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+}
+
+/* ---- focus ---- */
+
+.btn:focus-visible,
+.tab:focus-visible,
+.icon-btn:focus-visible,
+.dot:focus-visible,
+.tag:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+kbd {
+  font-family: var(--font-display);
+  font-size: 0.7em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  opacity: 0.9;
+}
+
+.rule {
+  border: 0;
+  border-top: 2px solid var(--line-soft);
+  margin: var(--s4) 0 var(--s3);
+}
+
+.hint {
+  margin: var(--s2) 0 var(--s3);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.hint strong {
+  color: var(--amber);
+}
+
+/* ---------------- scrollbars ---------------- */
+
+.panel-body::-webkit-scrollbar,
+.roster::-webkit-scrollbar,
+.qlist::-webkit-scrollbar,
+.takeover::-webkit-scrollbar {
+  width: 10px;
+}
+
+.panel-body::-webkit-scrollbar-thumb,
+.roster::-webkit-scrollbar-thumb,
+.qlist::-webkit-scrollbar-thumb,
+.takeover::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+}
+
+.panel-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* ---------------- reduced motion ----------------
+   Kills ambient looping animation everywhere; the selection beats still run,
+   just compressed (see TIMING_REDUCED). */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.08s !important;
+  }
+}
+
+.app--reduced .crew,
+.app--reduced .holo-ring,
+.app--reduced .holo-glow,
+.app--reduced .beacon,
+.app--reduced .star,
+.app--reduced .screen,
+.app--reduced .crew-bead,
+.app--reduced .floor-strips rect,
+.app--reduced .hud-mode--open {
+  animation: none !important;
+}
+
+.app--reduced .crew {
+  transition-duration: 0.18s !important;
+}
