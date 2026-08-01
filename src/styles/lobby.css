@@ -81,21 +81,28 @@
   /* Own stacking context: keeps the crew/tag z-indexes (up to 300) contained
      so the banner and question card can sit above the whole lobby. */
   z-index: 0;
+  /* Size container so .deck can size itself against BOTH stage axes below. */
+  container-type: size;
 }
 
 /* Matches the room SVG's 1200x800 viewBox, letterboxed inside the stage.
    Both the artwork and the crew layer fill this box, so a crew member at
    "50% 51%" is genuinely at the centre of the room at any screen size. */
-/* Height-driven with a max-width clamp, so the deck fits inside the stage in
-   BOTH directions — a percentage max-height on a grid item is indefinite and
-   was letting the room overflow and clip the bottom row of crew. */
+/* The deck MUST stay exactly 3:2, because the crew layer maps percentage
+   positions onto this box while the SVG letterboxes inside it. If the box is
+   any other ratio the two disagree and crew drift outside the hull.
+
+   `height: 100% + max-width: 100%` looked right but isn't: when the width cap
+   bites on a narrow screen the height stays at 100%, so the box silently stops
+   being 3:2. Sizing the width against both stage axes keeps the ratio exact —
+   150cqh is 1.5x the stage height, i.e. the widest a 3:2 box can be and still
+   fit vertically. */
 .deck {
   position: relative;
   aspect-ratio: 1200 / 800;
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  flex: 0 1 auto;
+  width: min(100cqw, 150cqh);
+  height: auto;
+  flex: 0 0 auto;
   /* Clips the ejected crew member as they clear the hull — they vanish into
      space rather than sailing across the teacher's panel. */
   overflow: hidden;
@@ -122,8 +129,14 @@
   inset: 0;
   container-type: inline-size;
   pointer-events: none;
-  /* Default crew scale; Lobby overrides this inline as the class grows. */
+  /* Defaults; Lobby overrides both inline as the class grows. These must live
+     here rather than on .crew-layer/.tag-layer — a custom property re-declared
+     on a descendant beats the value inherited from this element, so a fallback
+     further down would silently win over Lobby's inline value. */
   --crew-w: 6.6cqw;
+  /* Names shrink to FIT the seat pitch rather than truncating into ambiguity
+     ("Student10" → "Student1" makes two students indistinguishable). */
+  --tag-fs: clamp(8px, calc(var(--crew-w) * 0.29), 19px);
 }
 
 /* Sized in container units, not viewport units: a crew member is a fixed
@@ -138,7 +151,6 @@
   /* Inherits --crew-w from .deck-layers; both derive from it so the tag always
      lands just under the character whatever the class size. */
   --art-h: calc(var(--crew-w) * 1.15);
-  --tag-fs: clamp(7px, calc(var(--crew-w) * 0.29), 19px);
 }
 
 .tag-layer--picking .tag,
@@ -368,8 +380,11 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  max-width: 15ch;
-  padding: 0.25em 0.75em;
+  /* Whichever is tighter: a sane character cap, or the space this seat
+     actually has (set by Lobby from the seat pitch). Long names ellipsise
+     rather than colliding with the neighbour. */
+  max-width: min(15ch, var(--tag-max, 15ch));
+  padding: 0.25em 0.6em;
   border: 2.5px solid var(--ink);
   border-radius: 999px;
   background: rgba(12, 15, 30, 0.94);

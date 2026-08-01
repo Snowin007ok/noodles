@@ -12,7 +12,7 @@ export function CaughtBanner({ name, visible }) {
     >
       <div className="banner-inner">
         <span className="banner-kicker">⚠ AIRLOCK CYCLE INITIATED</span>
-        <span className="banner-title">CHALLENGER CAUGHT</span>
+        <span className="banner-title">IMPOSTOR</span>
         <span className="banner-name">{name}</span>
       </div>
     </div>
@@ -111,7 +111,7 @@ export function QuestionCard({
       <section className="takeover" aria-live="polite">
         <div className="takeover-inner">
           <p className="takeover-kicker">
-            <span>⚠ Challenger caught</span>
+            <span>⚠ Impostor identified</span>
             <span className="takeover-round">Round {round.number} / 10</span>
           </p>
 

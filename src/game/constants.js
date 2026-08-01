@@ -33,7 +33,7 @@ export const TIMING = {
   spin: 2800, // name-cycling duration → lock-in happens at this mark
   audioPeakOffset: 1180, // measured offset of the sting's impact
   alarm: 2800, // red strobe begins
-  banner: 2900, // "CHALLENGER CAUGHT" slams in
+  banner: 2900, // "IMPOSTOR" banner slams in
   alarmOff: 4400,
   audioFade: 4200, // begin fading the sting out
   audioFadeDur: 600,

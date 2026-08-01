@@ -178,7 +178,7 @@ function ControlTab({ state, dispatch, actions, clock }) {
       {round.revealed && (
         <p className="pool-line">
           {round.status === 'ejected'
-            ? 'Time ran out — challenger was ejected to space.'
+            ? 'Time ran out — the impostor was ejected to space.'
             : round.status === 'answered'
               ? 'Answered by a volunteer. Move to the next round.'
               : round.selectedId

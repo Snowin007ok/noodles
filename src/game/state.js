@@ -4,7 +4,7 @@
  * Phases:
  *   'lobby'    — crew idle, teacher may spin (or, on a volunteer round, pick)
  *   'spinning' — names cycling, audio scheduled
- *   'caught'   — "CHALLENGER CAUGHT" banner up
+ *   'caught'   — "IMPOSTOR" banner up
  *   'question' — question on screen, 2:00 countdown running
  *   'ejecting' — the clock ran out; airlock cycling
  *
@@ -287,7 +287,7 @@ export function reducer(state, action) {
     /**
      * Volunteer rounds: the teacher taps whoever spoke up. This is the only
      * way a round can end as 'answered' — and only when nobody has been spun
-     * for. Once a challenger is on the clock, nothing cancels the airlock.
+     * for. Once an impostor is on the clock, nothing cancels the airlock.
      */
     case 'round/pickAnswerer': {
       const round = state.rounds.find((r) => r.number === state.currentRound)

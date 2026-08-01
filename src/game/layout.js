@@ -129,6 +129,26 @@ export function seatFor(index, total) {
 }
 
 /**
+ * Horizontal gap between neighbouring seats on the tightest occupied row, as a
+ * percentage of deck WIDTH. Name tags are capped to this so two adjacent tags
+ * can never overlap, however long the names are.
+ *
+ * Path lengths are in pixel-equivalents (horizontal runs were multiplied by
+ * ASPECT), so dividing by ASPECT converts a spacing back into deck-width
+ * percent — the axis a tag actually grows along.
+ */
+export function seatPitch(total) {
+  const n = Math.max(1, total)
+  const { r1, r2, r3 } = allocate(n)
+  const pitches = []
+  if (r1) pitches.push(BENCH_PATH.total / r1 / ASPECT)
+  if (r2) pitches.push(SECOND_PATH.total / r2 / ASPECT)
+  // Row 3 is an ellipse; its tightest horizontal spacing is across the top.
+  if (r3) pitches.push((2 * Math.PI * RING_3.rx) / r3)
+  return pitches.length ? Math.min(...pitches) : 100
+}
+
+/**
  * Crew scale as a fraction of the room width. Big classes need smaller crew or
  * the rings collide — 6.6% of the room at 16 students, easing down to ~4.4% by
  * the time a full 45 are aboard.

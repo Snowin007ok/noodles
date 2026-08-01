@@ -1,6 +1,6 @@
 import LobbyRoom from './LobbyRoom'
 import CrewMember from './CrewMember'
-import { seatFor, crewScale, AIRLOCK } from '../game/layout'
+import { seatFor, crewScale, seatPitch, AIRLOCK } from '../game/layout'
 import { CREW_COLORS } from '../game/constants'
 import { displayName } from '../game/state'
 
@@ -53,7 +53,19 @@ export default function Lobby({
         {/* Crew shrink as the class grows so 45 aboard still reads clearly. */}
         <div
           className="deck-layers"
-          style={{ '--crew-w': `${crewScale(students.length)}cqw` }}
+          style={(() => {
+            const pitch = seatPitch(students.length)
+            return {
+              '--crew-w': `${crewScale(students.length)}cqw`,
+              // Cap tag width at the seat pitch (less a gap) so neighbouring
+              // tags butt up but never overlap, whatever the names are.
+              '--tag-max': `${(pitch * 0.94).toFixed(2)}cqw`,
+              // Scale the type to that same pitch so a ~9-character name FITS
+              // instead of ellipsising. Empirically: 9 chars ≈ 5.2em of text
+              // plus 1.2em padding, so em-width ≈ pitch / 7.5.
+              '--tag-fs': `clamp(8px, ${(pitch / 7.5).toFixed(3)}cqw, 19px)`,
+            }
+          })()}
         >
         {/* ---------- layer 1: artwork ---------- */}
         <div className="crew-layer">
@@ -151,7 +163,9 @@ export default function Lobby({
 
             return (
               <Tag key={student.id} className={cls} style={style} {...interactive}>
-                <span className="tag-name">
+                {/* title as a safety net: a very long name still ellipsises in
+                    a big class, and hovering must always recover it in full. */}
+                <span className="tag-name" title={displayName(student)}>
                   {displayName(student)}
                   {/* Not while they're the one on the spot — the tick means
                       "has had a turn", not a verdict on this round. */}
