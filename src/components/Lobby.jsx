@@ -39,6 +39,13 @@ export default function Lobby({
   const aboardCount = students.filter((s) => !s.ejected).length
   const offDeck = aboardCount - cast.length
 
+  /* The "gotcha" beat. When the spin locks in we need the caught crew
+     member's seat so the spotlight, shockwave and sparks can all originate
+     from exactly where they're standing. */
+  const caughtIndex = cast.findIndex((s) => s.id === caughtId)
+  const caughtSeat =
+    phase === 'caught' && caughtIndex >= 0 ? seatFor(caughtIndex, cast.length) : null
+
   const flags = (student, i) => {
     const isSpot = student.id === spotlightId && phase === 'spinning'
     const isCaught = student.id === caughtId && phase !== 'lobby'
@@ -55,7 +62,7 @@ export default function Lobby({
     <div className="stage">
       {/* .deck locks the same 3:2 box the room SVG renders into, so crew
           percentage coordinates line up with the artwork at every size. */}
-      <div className="deck">
+      <div className={`deck${caughtSeat ? ' deck--punch' : ''}`}>
         <LobbyRoom alarm={alarm} airlockOpen={airlockOpen} />
 
         {/* Crew shrink as the class grows so 45 aboard still reads clearly. */}
@@ -63,18 +70,62 @@ export default function Lobby({
           className="deck-layers"
           style={(() => {
             const pitch = seatPitch(cast.length)
+            // Size the type so the LONGEST name actually on deck fits the
+            // seat pitch. Empirically (Fredoka, semibold): one character is
+            // ~0.74em — measured against a 13-char two-word name with caps —
+            // plus 1.2em of pill padding. Clamped 6..14 chars so one
+            // silly-long name can't shrink the whole room to 8px.
+            const maxLen = Math.min(
+              14,
+              Math.max(6, ...cast.map((s) => displayName(s).length)),
+            )
             return {
               '--crew-w': `${crewScale(cast.length)}cqw`,
               // Cap tag width at the seat pitch (less a gap) so neighbouring
               // tags butt up but never overlap, whatever the names are.
               '--tag-max': `${(pitch * 0.94).toFixed(2)}cqw`,
-              // Scale the type to that same pitch so a ~9-character name FITS
-              // instead of ellipsising. Empirically: 9 chars ≈ 5.2em of text
-              // plus 1.2em padding, so em-width ≈ pitch / 7.5.
-              '--tag-fs': `clamp(8px, ${(pitch / 7.5).toFixed(3)}cqw, 19px)`,
+              '--tag-fs': `clamp(8px, ${((pitch * 0.94) / (0.74 * maxLen + 1.2)).toFixed(3)}cqw, 19px)`,
             }
           })()}
         >
+        {/* ---------- the catch: spotlight, shockwave, sparks ----------
+            Three separate siblings rather than one wrapper: each needs its own
+            z-index so the rings sit behind the caught crew member while the
+            sparks fly in front of them. A single positioned wrapper would trap
+            them all in one stacking context. */}
+        {caughtSeat && (
+          <>
+            {/* Everything but the culprit falls into shadow. */}
+            <div
+              className="fx-spot"
+              style={{ '--fx-x': `${caughtSeat.x}%`, '--fx-y': `${caughtSeat.y}%` }}
+            />
+            <div
+              className="fx-burst"
+              style={{ left: `${caughtSeat.x}%`, top: `${caughtSeat.y}%` }}
+            >
+              <span className="fx-glow" />
+              <span className="fx-ring" />
+              <span className="fx-ring fx-ring--2" />
+            </div>
+            <div
+              className="fx-sparks"
+              style={{ left: `${caughtSeat.x}%`, top: `${caughtSeat.y}%` }}
+            >
+              {Array.from({ length: 12 }, (_, s) => (
+                <span
+                  key={s}
+                  style={{
+                    '--a': `${s * 30 + (s % 3) * 7}deg`,
+                    '--d': `${7 + (s % 4) * 2.6}cqw`,
+                    '--sd': `${(s % 5) * 0.035}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         {/* ---------- layer 1: artwork ---------- */}
         <div className="crew-layer">
           {cast.map((student, i) => {
@@ -103,7 +154,9 @@ export default function Lobby({
                   '--bob-delay': `${(i % 7) * 0.31}s`,
                   '--bob-dur': `${3.1 + (i % 5) * 0.24}s`,
                   // Top-down depth sort: crew lower on the deck draw in front.
-                  zIndex: isCaught || isSpot ? 60 : 5 + Math.round(slot.y),
+                  // Depth values reach ~90, so the spotlit/caught crew member
+                  // needs to clear that — but stay under the tag layer (200+).
+                  zIndex: isCaught || isSpot ? 150 : 5 + Math.round(slot.y),
                 }}
                 // In pick mode the character itself is tappable, but the tag
                 // below carries the accessible name — so this one is hidden

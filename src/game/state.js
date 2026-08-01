@@ -249,8 +249,15 @@ export function reducer(state, action) {
       }
 
     /* ---------- selection ---------- */
+    /** A spin (or re-spin) restarts the round: any previous outcome on it is
+     *  void, otherwise a re-spun round drags "EJECTED — TIME UP" and its old
+     *  reveal into the fresh takeover. */
     case 'spin/start':
-      return { ...state, phase: 'spinning', caughtId: null, spotlightId: null }
+      return patchRound(
+        { ...state, phase: 'spinning', caughtId: null, spotlightId: null },
+        state.currentRound,
+        { status: 'pending', revealed: false, selectedId: null, answeredById: null },
+      )
 
     case 'spin/spotlight':
       return { ...state, spotlightId: action.id }

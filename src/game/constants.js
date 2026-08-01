@@ -101,23 +101,31 @@ export const CREW_COLORS = [
 
 export const colorFor = (index) => CREW_COLORS[index % CREW_COLORS.length]
 
+/* Fictional placeholder roster — replace via Roster → paste. Real class lists
+   belong in the app (localStorage), never committed to a public repo. */
 export const SAMPLE_STUDENTS = [
-  'Aarav', 'Priya', 'Rohan', 'Meera', 'Kabir', 'Ananya',
-  'Vikram', 'Diya', 'Arjun', 'Ishita', 'Nikhil', 'Saanvi',
-  'Rahul', 'Tara', 'Aditya', 'Nisha',
+  'Aarav', 'Abinaya', 'Adhvik', 'Akilan', 'Amudha', 'Anitha Sri',
+  'Balaji', 'Bhuvana', 'Chandran', 'Deepan', 'Devika', 'Dhanush',
+  'Elakkiya', 'Ezhil', 'Gautham', 'Gowri Shree', 'Hariharan', 'Ilamathi',
+  'Inba', 'Jeevitha', 'Kalyani', 'Kamalesh', 'Kaviya', 'Kumaran',
+  'Lavanya', 'Madhavan', 'Malar', 'Mithran', 'Mohana Sri', 'Nandhini',
+  'Nithesh', 'Oviya', 'Pandiyan', 'Poorani', 'Pranav', 'Ragavi',
+  'Rajesh', 'Sabari', 'Selvi', 'Senthil', 'Thamizh', 'Uma Bharathi',
+  'Vasanth', 'Vennila', 'Yuvan',
 ]
 
-/* Rounds 2, 4, 7, 9 and 10 are volunteer rounds — those prompts are written
-   open-ended so anyone can jump in. */
+/* Reflective, open-ended speaking prompts — the kind an emcee asks someone who
+   has just been pulled on stage. Rounds 2, 4, 7, 9 and 10 are volunteer rounds
+   and are phrased as an invitation to the whole room. */
 export const SAMPLE_QUESTIONS = [
-  'What is the largest planet in our solar system, and what is it mostly made of?',
-  'VOLUNTEER: Who can name three states of matter and give an everyday example of each?',
-  'What does the water cycle do with the water in a puddle after it rains?',
-  'VOLUNTEER: Can anyone explain why we see lightning before we hear thunder?',
-  'What is the difference between a herbivore, a carnivore, and an omnivore?',
-  'If a spacecraft is in orbit, why do the crew inside appear to float?',
-  'VOLUNTEER: Who wants to tell us what gas plants take in during photosynthesis — and what they give out?',
-  'Explain in your own words what gravity does.',
-  'VOLUNTEER: Describe one thing you learned today that surprised you.',
-  'VOLUNTEER: If our class could run one experiment aboard a space station, what would it be and why?',
+  'What does your daily routine say about your future?',
+  'VOLUNTEER: What is more difficult — starting a good habit or breaking a bad one? Why?',
+  'If you could master one skill instantly, what would it be — and what would you do with it first?',
+  'VOLUNTEER: What is one piece of advice you would give your younger self?',
+  'Tell us about a small failure that taught you something big.',
+  'What is one small habit you are ignoring today that could change your tomorrow?',
+  'VOLUNTEER: What is something everyone seems to love that you just do not get?',
+  'If your life had a loading screen, what tip would it show?',
+  'VOLUNTEER: Describe your week in exactly three words — then explain one of them.',
+  'VOLUNTEER: What is one thing this team should start doing from tomorrow?',
 ]

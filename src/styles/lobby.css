@@ -382,8 +382,10 @@
   gap: 5px;
   /* Whichever is tighter: a sane character cap, or the space this seat
      actually has (set by Lobby from the seat pitch). Long names ellipsise
-     rather than colliding with the neighbour. */
-  max-width: min(15ch, var(--tag-max, 15ch));
+     rather than colliding with the neighbour. 18ch, not 15: the font formula
+     fits names up to 14 chars, and 14 average glyphs ≈ 16.2ch (a ch is the
+     width of "0", narrower than the average letter) plus the ✓ tick. */
+  max-width: min(18ch, var(--tag-max, 18ch));
   padding: 0.25em 0.6em;
   border: 2.5px solid var(--ink);
   border-radius: 999px;
@@ -439,22 +441,174 @@
 
 /* ---- locked in ---- */
 
+/* ==========================================================
+   THE CATCH — the moment the spin locks in.
+
+   Beat order, all firing together:
+     1. camera punches in and shakes      (.deck--punch)
+     2. the room drops into shadow, one pool of light left  (.fx-spot)
+     3. two shockwave rings burst outward (.fx-burst)
+     4. sparks fly                        (.fx-sparks)
+     5. the culprit pops, squashes, then hovers (.crew--caught)
+   ========================================================== */
+
+/* 1. Camera punch. Scaling .deck moves the room AND everyone standing in it,
+   so it reads as the camera lunging rather than the art growing. */
+.deck--punch {
+  animation: deckPunch 820ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+
+@keyframes deckPunch {
+  0% { transform: scale(1) translate(0, 0); }
+  9% { transform: scale(1.05) translate(-0.7%, 0.4%); }
+  18% { transform: scale(1.042) translate(0.6%, -0.5%); }
+  27% { transform: scale(1.046) translate(-0.45%, -0.25%); }
+  38% { transform: scale(1.036) translate(0.35%, 0.3%); }
+  52% { transform: scale(1.028) translate(-0.2%, 0); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+/* 2. Spotlight. A hole of clear light over the culprit, deep shadow elsewhere.
+   Sits above ordinary crew (z ≤ 90) but below the caught crew member (150),
+   so everyone else is swallowed while they stay lit. */
+.fx-spot {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--fx-x) var(--fx-y),
+    rgba(255, 214, 92, 0.26) 0,
+    rgba(255, 160, 60, 0.1) 5cqw,
+    rgba(4, 6, 14, 0.55) 13cqw,
+    rgba(3, 4, 11, 0.88) 34cqw,
+    rgba(2, 3, 8, 0.94) 100%
+  );
+  animation: spotIn 460ms ease-out both;
+}
+
+@keyframes spotIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 3. Shockwave rings — behind the crew member, in front of the shadow. */
+.fx-burst {
+  position: absolute;
+  z-index: 110;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.fx-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26cqw;
+  height: 26cqw;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 224, 130, 0.5) 0%,
+    rgba(255, 130, 60, 0.22) 38%,
+    transparent 70%
+  );
+  animation: glowPulse 900ms ease-out both;
+}
+
+@keyframes glowPulse {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  22% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0.55; }
+}
+
+.fx-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12cqw;
+  height: 12cqw;
+  border-radius: 50%;
+  border: 0.55cqw solid var(--amber);
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: shockwave 760ms cubic-bezier(0.16, 0.85, 0.3, 1) both;
+}
+
+.fx-ring--2 {
+  border-color: var(--red);
+  animation-delay: 130ms;
+  animation-duration: 900ms;
+}
+
+@keyframes shockwave {
+  0% { transform: translate(-50%, -50%) scale(0.15); opacity: 0; border-width: 0.7cqw; }
+  12% { opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; border-width: 0.06cqw; }
+}
+
+/* 4. Sparks — in front of the crew member, behind the name tags. */
+.fx-sparks {
+  position: absolute;
+  z-index: 160;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.fx-sparks span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0.85cqw;
+  height: 0.85cqw;
+  margin: -0.42cqw 0 0 -0.42cqw;
+  border-radius: 999px;
+  background: var(--amber);
+  box-shadow: 0 0 0.8cqw rgba(255, 210, 61, 0.9);
+  animation: sparkOut 720ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
+  animation-delay: var(--sd, 0s);
+}
+
+.fx-sparks span:nth-child(3n) {
+  background: #fff2c4;
+}
+
+.fx-sparks span:nth-child(4n) {
+  background: var(--orange);
+}
+
+@keyframes sparkOut {
+  0% { transform: rotate(var(--a)) translateX(1cqw) scale(0.3); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(var(--d)) scale(0); opacity: 0; }
+}
+
+/* 5. The culprit: yanked upward, squashed on landing, then left hovering.
+   Scale lives on .crew (positioning) and the pop on .crew-art, so the two
+   never fight over the same transform. */
 .crew--caught {
   transform: translate(-50%, -50%) scale(1.38);
 }
 
+.crew--caught .crew-art {
+  animation: caughtPop 820ms cubic-bezier(0.2, 1.5, 0.35, 1) both;
+  transform-origin: 50% 100%;
+}
+
+@keyframes caughtPop {
+  0% { transform: translateY(0) scale(1, 1); }
+  14% { transform: translateY(0) scale(1.32, 0.7); }
+  34% { transform: translateY(-22%) scale(0.82, 1.3) rotate(-7deg); }
+  52% { transform: translateY(-9%) scale(1.12, 0.92) rotate(6deg); }
+  68% { transform: translateY(-14%) scale(0.97, 1.05) rotate(-3deg); }
+  84% { transform: translateY(-10%) scale(1.02, 0.99) rotate(1.5deg); }
+  100% { transform: translateY(-11%) scale(1, 1) rotate(0); }
+}
+
 .tag--caught {
   transform: translate(-50%, calc(var(--art-h) * 0.78)) scale(2);
-}
-
-.crew--caught .crew-art {
-  animation: caughtShake 0.42s ease-in-out 3;
-}
-
-@keyframes caughtShake {
-  0%, 100% { transform: translateX(0) rotate(0); }
-  25% { transform: translateX(-5px) rotate(-5deg); }
-  75% { transform: translateX(5px) rotate(5deg); }
 }
 
 .tag--caught .tag-name {

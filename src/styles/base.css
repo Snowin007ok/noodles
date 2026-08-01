@@ -352,6 +352,20 @@ kbd {
   }
 }
 
+/* The catch keeps its spotlight (that's the information — WHO was picked) but
+   drops the camera shake, shockwave and sparks, which are pure motion. */
+.app--reduced .deck--punch,
+.app--reduced .crew--caught .crew-art,
+.app--reduced .fx-glow,
+.app--reduced .fx-ring {
+  animation: none !important;
+}
+
+.app--reduced .fx-burst,
+.app--reduced .fx-sparks {
+  display: none !important;
+}
+
 .app--reduced .crew,
 .app--reduced .holo-ring,
 .app--reduced .holo-glow,

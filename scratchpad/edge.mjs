@@ -43,9 +43,9 @@ check('remove clears pool entry', !v.pool.includes(vid))
 let w = initialState()
 for (const st of w.students) w = reducer(w, { type: 'student/eject', id: st.id })
 check('all ejected -> empty pool', w.pool.length === 0, `pool=${w.pool.length}`)
-check('all ejected -> roster intact', w.students.length === 16)
+check('all ejected -> roster intact', w.students.length === initialState().students.length)
 w = reducer(w, { type: 'session/resetProgress' })
-check('reset brings everyone back', w.students.every(x=>!x.ejected) && w.pool.length === 16)
+check('reset brings everyone back', w.students.every(x=>!x.ejected) && w.pool.length === w.students.length)
 
 // --- 6. round statuses
 let x = initialState()
