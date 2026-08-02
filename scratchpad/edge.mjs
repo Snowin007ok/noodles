@@ -1,4 +1,15 @@
-import { reducer, initialState, displayName } from '../src/game/state.js'
+import { reducer, initialState, displayName, save, load } from '../src/game/state.js'
+
+// Minimal localStorage shim so save()/load() are testable in Node.
+globalThis.localStorage = (() => {
+  let store = {}
+  return {
+    getItem: (k) => store[k] ?? null,
+    setItem: (k, v) => { store[k] = String(v) },
+    removeItem: (k) => { delete store[k] },
+    clear: () => { store = {} },
+  }
+})()
 
 const results = []
 const check = (name, pass, detail='') => results.push({ name, pass, detail })
@@ -63,6 +74,29 @@ const zid = z.students[1].id
 z = reducer(z, { type: 'spin/commit', id: zid, pool: z.pool.filter(i=>i!==zid) })
 z = reducer(z, { type: 'round/pickAnswerer', id: z.students[0].id })
 check('spun volunteer round stays pending', z.rounds[1].status === 'pending', z.rounds[1].status)
+
+// --- 8. an emptied roster self-heals on load, keeping edited questions
+let e1 = initialState()
+for (const st of [...e1.students]) e1 = reducer(e1, { type: 'student/remove', id: st.id })
+e1 = reducer(e1, { type: 'question/edit', id: 'q1', text: 'CUSTOM QUESTION' })
+save(e1)
+const healed = load()
+check('empty roster self-heals on load',
+  healed.students.length === initialState().students.length,
+  `restored ${healed.students.length} students`)
+check('self-heal keeps edited questions', healed.questions[0].text === 'CUSTOM QUESTION')
+check('self-heal rebuilds pool', healed.pool.length === healed.students.length)
+localStorage.clear()
+
+// --- 9. Load sample crew button refills an emptied roster in place
+let e2 = initialState()
+e2 = reducer(e2, { type: 'question/edit', id: 'q2', text: 'KEEP ME' })
+for (const st of [...e2.students]) e2 = reducer(e2, { type: 'student/remove', id: st.id })
+e2 = reducer(e2, { type: 'roster/loadSample' })
+check('loadSample refills roster',
+  e2.students.length > 0 && e2.pool.length === e2.students.length,
+  `${e2.students.length} aboard, pool ${e2.pool.length}`)
+check('loadSample keeps questions', e2.questions[1].text === 'KEEP ME')
 
 const failed = results.filter(r => !r.pass)
 for (const r of results) console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}${r.detail?'  — '+r.detail:''}`)

@@ -31,6 +31,7 @@ export default function Lobby({
   answeredById,
   displayCap,
   onPick,
+  onLoadSample,
 }) {
   // The room seats a cast, not the whole roster — everyone still draws from the
   // full pool. Whoever is spotlit, caught or answering is forced on deck so a
@@ -254,6 +255,9 @@ export default function Lobby({
             Add students in the <b>Roster</b> tab, or paste your whole class list
             at once.
           </span>
+          <button className="btn btn--good stage-empty-btn" onClick={onLoadSample}>
+            ▶ Load sample crew
+          </button>
         </div>
       )}
 

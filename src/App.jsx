@@ -367,6 +367,7 @@ export default function App() {
           displayCap={state.displayCap}
           answeredById={round?.answeredById}
           onPick={pickAnswerer}
+          onLoadSample={() => dispatch({ type: 'roster/loadSample' })}
         />
 
         {state.phase === 'caught' && caught && (

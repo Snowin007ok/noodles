@@ -90,6 +90,27 @@ export function load() {
     if (!raw) return initialState()
     const saved = JSON.parse(raw)
     if (saved.version !== 1 || !Array.isArray(saved.students)) return initialState()
+
+    /* Self-heal: a saved session with ZERO students has nothing worth
+       restoring — it just strands the next visitor on "No crew aboard"
+       with an un-runnable game. Keep what the teacher may genuinely have
+       edited (questions, audio, display settings) and bring the sample
+       crew back so the link always lands on something playable. */
+    if (saved.students.length === 0) {
+      const fresh = initialState()
+      return {
+        ...fresh,
+        questions:
+          Array.isArray(saved.questions) && saved.questions.length
+            ? saved.questions
+            : fresh.questions,
+        audio: saved.audio ?? fresh.audio,
+        reducedMotion: saved.reducedMotion ?? fresh.reducedMotion,
+        showNames: saved.showNames ?? fresh.showNames,
+        displayCap: saved.displayCap ?? fresh.displayCap,
+      }
+    }
+
     // Never restore mid-animation — a refresh should land in a stable lobby.
     const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
     const base = initialState()
@@ -233,6 +254,21 @@ export function reducer(state, action) {
           selectedId: r.selectedId === action.id ? null : r.selectedId,
           answeredById: r.answeredById === action.id ? null : r.answeredById,
         })),
+      }
+    }
+
+    /** Refill an emptied roster with the sample crew — the on-screen escape
+     *  hatch from "No crew aboard". Questions and settings are untouched. */
+    case 'roster/loadSample': {
+      const students = SAMPLE_STUDENTS.map(makeStudent)
+      return {
+        ...state,
+        students,
+        pool: buildPool(students.map((s) => s.id)),
+        lastDrawn: null,
+        caughtId: null,
+        spotlightId: null,
+        phase: 'lobby',
       }
     }
 
