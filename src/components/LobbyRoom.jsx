@@ -23,37 +23,37 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
       <defs>
         {/* ---- surfaces ---- */}
         <linearGradient id="hullOuter" x1="0" y1="0" x2="0.35" y2="1">
-          <stop offset="0%" stopColor="#39456e" />
-          <stop offset="45%" stopColor="#232b49" />
-          <stop offset="100%" stopColor="#141931" />
+          <stop offset="0%" stopColor="#4a3671" />
+          <stop offset="45%" stopColor="#30214b" />
+          <stop offset="100%" stopColor="#1f1233" />
         </linearGradient>
         <linearGradient id="wallBand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4d5a85" />
-          <stop offset="18%" stopColor="#333d63" />
-          <stop offset="82%" stopColor="#28304f" />
-          <stop offset="100%" stopColor="#1b2138" />
+          <stop offset="0%" stopColor="#5f4a88" />
+          <stop offset="18%" stopColor="#433066" />
+          <stop offset="82%" stopColor="#352651" />
+          <stop offset="100%" stopColor="#181233" />
         </linearGradient>
         <linearGradient id="deck" x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#2a3357" />
-          <stop offset="45%" stopColor="#212949" />
-          <stop offset="100%" stopColor="#171d36" />
+          <stop offset="0%" stopColor="#3a275a" />
+          <stop offset="45%" stopColor="#2f1f4b" />
+          <stop offset="100%" stopColor="#221538" />
         </linearGradient>
         <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5b688f" />
-          <stop offset="55%" stopColor="#3a4468" />
-          <stop offset="100%" stopColor="#252c47" />
+          <stop offset="0%" stopColor="#6a5892" />
+          <stop offset="55%" stopColor="#49376b" />
+          <stop offset="100%" stopColor="#312349" />
         </linearGradient>
         <linearGradient id="benchTop" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0%" stopColor="#4c5880" />
-          <stop offset="60%" stopColor="#333c60" />
-          <stop offset="100%" stopColor="#242b47" />
+          <stop offset="0%" stopColor="#5c4983" />
+          <stop offset="60%" stopColor="#433063" />
+          <stop offset="100%" stopColor="#302249" />
         </linearGradient>
 
         {/* ---- light ---- */}
         <radialGradient id="lampPool" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#bcd8ff" stopOpacity="0.20" />
-          <stop offset="45%" stopColor="#8fb4e8" stopOpacity="0.09" />
-          <stop offset="100%" stopColor="#7aa0d8" stopOpacity="0" />
+          <stop offset="0%" stopColor="#c6bcff" stopOpacity="0.20" />
+          <stop offset="45%" stopColor="#998aed" stopOpacity="0.09" />
+          <stop offset="100%" stopColor="#8574de" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="holoPool" cx="0.5" cy="0.5" r="0.5">
           <stop offset="0%" stopColor="#6ff0ff" stopOpacity="0.34" />
@@ -63,7 +63,7 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
         <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.62">
           <stop offset="0%" stopColor="#000" stopOpacity="0" />
           <stop offset="62%" stopColor="#000" stopOpacity="0.10" />
-          <stop offset="100%" stopColor="#03050c" stopOpacity="0.72" />
+          <stop offset="100%" stopColor="#06020d" stopOpacity="0.72" />
         </radialGradient>
         <radialGradient id="alarmGlow" cx="0.5" cy="0.5" r="0.62">
           <stop offset="0%" stopColor="#ff2b3d" stopOpacity="0" />
@@ -72,34 +72,34 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
         </radialGradient>
         {/* Ambient occlusion where the walls meet the deck. */}
         <linearGradient id="aoTop" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#05070f" stopOpacity="0.62" />
-          <stop offset="100%" stopColor="#05070f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#090410" stopOpacity="0.62" />
+          <stop offset="100%" stopColor="#090410" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="aoBottom" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stopColor="#05070f" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#05070f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#090410" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#090410" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="aoLeft" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#05070f" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#05070f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#090410" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#090410" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="aoRight" x1="1" y1="0" x2="0" y2="0">
-          <stop offset="0%" stopColor="#05070f" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#05070f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#090410" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#090410" stopOpacity="0" />
         </linearGradient>
 
         <linearGradient id="void" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#04060f" />
-          <stop offset="100%" stopColor="#101838" />
+          <stop offset="0%" stopColor="#080310" />
+          <stop offset="100%" stopColor="#1e0e3a" />
         </linearGradient>
 
         {/* ---- patterns ---- */}
         <pattern id="plating" width="96" height="96" patternUnits="userSpaceOnUse">
           <rect width="96" height="96" fill="none" />
-          <path d="M0 0h96M0 0v96" stroke="#465280" strokeWidth="1.5" opacity="0.34" />
-          <path d="M0 1.6h96M1.6 0v96" stroke="#0b0e1c" strokeWidth="1.6" opacity="0.3" />
-          <circle cx="8" cy="8" r="1.7" fill="#5b6894" opacity="0.5" />
-          <circle cx="88" cy="88" r="1.7" fill="#5b6894" opacity="0.35" />
+          <path d="M0 0h96M0 0v96" stroke="#5a4383" strokeWidth="1.5" opacity="0.34" />
+          <path d="M0 1.6h96M1.6 0v96" stroke="#110a1d" strokeWidth="1.6" opacity="0.3" />
+          <circle cx="8" cy="8" r="1.7" fill="#6d5897" opacity="0.5" />
+          <circle cx="88" cy="88" r="1.7" fill="#6d5897" opacity="0.35" />
         </pattern>
         <pattern
           id="hazard"
@@ -109,7 +109,7 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
           patternTransform="rotate(45)"
         >
           <rect width="24" height="24" fill="#f0be2e" />
-          <rect width="12" height="24" fill="#171b2b" />
+          <rect width="12" height="24" fill="#1e162c" />
         </pattern>
 
         <clipPath id="deckClip">
@@ -121,19 +121,19 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
       </defs>
 
       {/* ================= HULL ================= */}
-      <rect x="8" y="8" width="1184" height="784" rx="86" fill="url(#hullOuter)" stroke="#05060d" strokeWidth="15" />
-      <rect x="30" y="30" width="1140" height="740" rx="70" fill="url(#wallBand)" stroke="#0a0d1a" strokeWidth="6" />
+      <rect x="8" y="8" width="1184" height="784" rx="86" fill="url(#hullOuter)" stroke="#08050d" strokeWidth="15" />
+      <rect x="30" y="30" width="1140" height="740" rx="70" fill="url(#wallBand)" stroke="#10091b" strokeWidth="6" />
       {/* lit top edge of the wall band */}
       <path
         d="M100 34h1000"
-        stroke="#7e8db8"
+        stroke="#8f7bbb"
         strokeWidth="4"
         strokeLinecap="round"
         opacity="0.5"
       />
 
       {/* hull rivets */}
-      <g fill="#69769e" opacity="0.5">
+      <g fill="#7966a1" opacity="0.5">
         {Array.from({ length: 20 }, (_, i) => (
           <circle key={`rt${i}`} cx={130 + i * 49} cy={20} r="3.2" />
         ))}
@@ -155,11 +155,11 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
 
         {/* --- painted deck graphics --- */}
         {/* centre emblem ring */}
-        <circle cx="600" cy="400" r="232" fill="none" stroke="#4a7ab0" strokeWidth="3" strokeDasharray="26 30" opacity="0.24" />
-        <circle cx="600" cy="400" r="196" fill="none" stroke="#4a7ab0" strokeWidth="2" opacity="0.14" />
+        <circle cx="600" cy="400" r="232" fill="none" stroke="#4f44b6" strokeWidth="3" strokeDasharray="26 30" opacity="0.24" />
+        <circle cx="600" cy="400" r="196" fill="none" stroke="#4f44b6" strokeWidth="2" opacity="0.14" />
         {/* walkway edging */}
-        <path d="M150 128h900" stroke="#3f6796" strokeWidth="3" strokeDasharray="40 26" opacity="0.2" />
-        <path d="M150 672h900" stroke="#3f6796" strokeWidth="3" strokeDasharray="40 26" opacity="0.2" />
+        <path d="M150 128h900" stroke="#443a9b" strokeWidth="3" strokeDasharray="40 26" opacity="0.2" />
+        <path d="M150 672h900" stroke="#443a9b" strokeWidth="3" strokeDasharray="40 26" opacity="0.2" />
         {/* hazard chevrons on the approach to the airlock */}
         <g opacity="0.17">
           {[0, 1, 2, 3].map((i) => (
@@ -186,7 +186,7 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
               <g key={i}>
                 <path
                   d={`M${cx + dx * 0.72} ${cy + dy * 0.72} L${cx + dx * k} ${cy + dy * k}`}
-                  stroke="#3f6796"
+                  stroke="#443a9b"
                   strokeWidth="9"
                   strokeLinecap="round"
                   opacity="0.3"
@@ -204,7 +204,7 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
                     cx={cx + dx * t}
                     cy={cy + dy * t}
                     r="7"
-                    fill="#26314f"
+                    fill="#312451"
                     stroke="#5fe6ff"
                     strokeWidth="2.5"
                     opacity="0.4"
@@ -214,14 +214,14 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
             )
           })}
           {/* lateral conduits to the side walls */}
-          <path d="M482 400H190" stroke="#3f6796" strokeWidth="9" strokeLinecap="round" opacity="0.26" />
+          <path d="M482 400H190" stroke="#443a9b" strokeWidth="9" strokeLinecap="round" opacity="0.26" />
           <path d="M482 400H190" stroke="#5fe6ff" strokeWidth="3" strokeLinecap="round" opacity="0.24" />
-          <path d="M718 400h150" stroke="#3f6796" strokeWidth="9" strokeLinecap="round" opacity="0.26" />
+          <path d="M718 400h150" stroke="#443a9b" strokeWidth="9" strokeLinecap="round" opacity="0.26" />
           <path d="M718 400h150" stroke="#5fe6ff" strokeWidth="3" strokeLinecap="round" opacity="0.24" />
         </g>
 
         {/* scuffs */}
-        <g stroke="#8ea6cc" strokeWidth="2" fill="none" opacity="0.07">
+        <g stroke="#978ad0" strokeWidth="2" fill="none" opacity="0.07">
           <path d="M226 250c60 26 140 30 210 8" />
           <path d="M840 560c-54 30-130 34-196 12" />
           <path d="M300 620c40-26 96-34 150-22" />
@@ -256,10 +256,10 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
         <g className="consoles">
           {[286, 456, 626, 796].map((x, i) => (
             <g key={x}>
-              <ellipse cx={x + 66} cy={146} rx="78" ry="14" fill="#05070f" opacity="0.42" />
-              <rect x={x} y="66" width="132" height="70" rx="11" fill="url(#metal)" stroke="#0a0d1a" strokeWidth="5" />
-              <rect x={x + 6} y="70" width="120" height="7" rx="3.5" fill="#8695c0" opacity="0.4" />
-              <rect x={x + 13} y="80" width="106" height="38" rx="5" fill="#08202f" stroke="#0a0d1a" strokeWidth="3" />
+              <ellipse cx={x + 66} cy={146} rx="78" ry="14" fill="#090410" opacity="0.42" />
+              <rect x={x} y="66" width="132" height="70" rx="11" fill="url(#metal)" stroke="#10091b" strokeWidth="5" />
+              <rect x={x + 6} y="70" width="120" height="7" rx="3.5" fill="#9783c3" opacity="0.4" />
+              <rect x={x + 13} y="80" width="106" height="38" rx="5" fill="#060831" stroke="#10091b" strokeWidth="3" />
               <g className={`screen screen--${i}`}>
                 <rect x={x + 18} y="85" width="96" height="28" rx="3" fill={i % 2 ? '#2ce39a' : '#4fd0ff'} opacity="0.28" />
                 <path
@@ -270,14 +270,14 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
                   strokeLinecap="round"
                 />
               </g>
-              <g fill="#12162a">
+              <g fill="#1b112b">
                 {Array.from({ length: 7 }, (_, k) => (
                   <rect key={k} x={x + 15 + k * 15} y="122" width="11" height="7" rx="2" />
                 ))}
               </g>
             </g>
           ))}
-          <g stroke="#3d476c" strokeWidth="10" strokeLinecap="round" opacity="0.7">
+          <g stroke="#4d3a6f" strokeWidth="10" strokeLinecap="round" opacity="0.7">
             <path d="M150 96h110" />
             <path d="M948 96h100" />
           </g>
@@ -293,7 +293,7 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
             perimeter at x 138→1068, y 192→684, so anything placed along the
             side or bottom walls ends up underneath a crew member. Above the
             ring, y < 145, is the one band that stays clear. */}
-        <Crate x={80} y={62} s={74} tone="#3f5a8a" cap="#6690cc" label />
+        <Crate x={80} y={62} s={74} tone="#4c3b8e" cap="#7260d2" label />
         <Crate x={168} y={76} s={56} tone="#8a6a3a" cap="#c8a05c" />
         <Crate x={966} y={62} s={74} tone="#3f6b6a" cap="#5fa8a5" label />
         <Crate x={1054} y={70} s={54} tone="#8a3f3f" cap="#c86666" />
@@ -307,10 +307,10 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
 
         {/* --- centre holo-table --- */}
         <g className="holotable">
-          <ellipse cx="604" cy="470" rx="132" ry="26" fill="#05070f" opacity="0.45" />
-          <circle cx="600" cy="400" r="118" fill="#20284a" stroke="#0a0d1a" strokeWidth="8" />
-          <circle cx="600" cy="400" r="118" fill="none" stroke="#5f6d99" strokeWidth="3" opacity="0.5" />
-          <circle cx="600" cy="400" r="98" fill="#161c34" stroke="#3d476c" strokeWidth="5" />
+          <ellipse cx="604" cy="470" rx="132" ry="26" fill="#090410" opacity="0.45" />
+          <circle cx="600" cy="400" r="118" fill="#2f1d4d" stroke="#10091b" strokeWidth="8" />
+          <circle cx="600" cy="400" r="118" fill="none" stroke="#715c9c" strokeWidth="3" opacity="0.5" />
+          <circle cx="600" cy="400" r="98" fill="#211436" stroke="#4d3a6f" strokeWidth="5" />
           <circle className="holo-glow" cx="600" cy="400" r="104" fill="url(#holoPool)" />
           {/* projected rings */}
           <circle className="holo-ring" cx="600" cy="400" r="70" fill="none" stroke="#7ff2ff" strokeWidth="3.5" strokeDasharray="14 18" opacity="0.85" />
@@ -331,8 +331,8 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
                 width="26"
                 height="16"
                 rx="4"
-                fill="#3d476c"
-                stroke="#0a0d1a"
+                fill="#4d3a6f"
+                stroke="#10091b"
                 strokeWidth="3"
               />
             )
@@ -352,13 +352,13 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
       <g className="airlock">
         {/* Recessed alcove in the wall rather than a box bolted onto it: dark
             metal surround, hazard used only as thin accent bands. */}
-        <rect x="1068" y="272" width="122" height="256" rx="18" fill="#2b3350" stroke="#0a0d1a" strokeWidth="7" />
-        <rect x="1068" y="272" width="122" height="256" rx="18" fill="none" stroke="#6c7aa6" strokeWidth="2.5" opacity="0.45" />
+        <rect x="1068" y="272" width="122" height="256" rx="18" fill="#372952" stroke="#10091b" strokeWidth="7" />
+        <rect x="1068" y="272" width="122" height="256" rx="18" fill="none" stroke="#7e69a9" strokeWidth="2.5" opacity="0.45" />
         {/* hazard accent bands, top and bottom of the frame only */}
         <rect x="1078" y="280" width="102" height="11" rx="3" fill="url(#hazard)" opacity="0.9" />
         <rect x="1078" y="509" width="102" height="11" rx="3" fill="url(#hazard)" opacity="0.9" />
         {/* inner recess shadow */}
-        <rect x="1082" y="288" width="96" height="224" rx="10" fill="#0a0e18" stroke="#05070f" strokeWidth="6" />
+        <rect x="1082" y="288" width="96" height="224" rx="10" fill="#0e0919" stroke="#090410" strokeWidth="6" />
         <g clipPath="url(#airlockClip)">
           <rect x="1086" y="292" width="86" height="216" fill="url(#void)" />
           <g fill="#ffffff">
@@ -371,20 +371,20 @@ export default function LobbyRoom({ alarm, airlockOpen }) {
             ))}
           </g>
           <g className="airlock-door airlock-door--top">
-            <rect x="1086" y="292" width="86" height="109" fill="url(#metal)" stroke="#0a0d1a" strokeWidth="5" />
-            <path d="M1094 344h70M1094 364h70" stroke="#1a2038" strokeWidth="5" />
+            <rect x="1086" y="292" width="86" height="109" fill="url(#metal)" stroke="#10091b" strokeWidth="5" />
+            <path d="M1094 344h70M1094 364h70" stroke="#1a1338" strokeWidth="5" />
             <rect x="1118" y="300" width="22" height="28" rx="4" fill="#f0be2e" opacity="0.6" />
           </g>
           <g className="airlock-door airlock-door--bottom">
-            <rect x="1086" y="399" width="86" height="109" fill="url(#metal)" stroke="#0a0d1a" strokeWidth="5" />
-            <path d="M1094 436h70M1094 456h70" stroke="#1a2038" strokeWidth="5" />
+            <rect x="1086" y="399" width="86" height="109" fill="url(#metal)" stroke="#10091b" strokeWidth="5" />
+            <path d="M1094 436h70M1094 456h70" stroke="#1a1338" strokeWidth="5" />
             <rect x="1118" y="472" width="22" height="28" rx="4" fill="#f0be2e" opacity="0.6" />
           </g>
         </g>
-        <rect x="1082" y="288" width="96" height="224" rx="10" fill="none" stroke="#05070f" strokeWidth="5" />
+        <rect x="1082" y="288" width="96" height="224" rx="10" fill="none" stroke="#090410" strokeWidth="5" />
         {/* beacons recessed into the frame edge, on the deck side */}
-        <circle className="beacon" cx="1058" cy="300" r="8" fill="#ff3b52" stroke="#0a0d1a" strokeWidth="3.5" />
-        <circle className="beacon beacon--delay" cx="1058" cy="500" r="8" fill="#ff3b52" stroke="#0a0d1a" strokeWidth="3.5" />
+        <circle className="beacon" cx="1058" cy="300" r="8" fill="#ff3b52" stroke="#10091b" strokeWidth="3.5" />
+        <circle className="beacon beacon--delay" cx="1058" cy="500" r="8" fill="#ff3b52" stroke="#10091b" strokeWidth="3.5" />
       </g>
 
       {/* corner strobes */}
@@ -403,10 +403,10 @@ function Bench({ x, y, w, h, slats }) {
   const n = slats === 'v' ? Math.floor(h / 50) : Math.floor(w / 50)
   return (
     <g className="bench">
-      <rect x={x - 4} y={y + 8} width={w + 12} height={h + 8} rx="20" fill="#05070f" opacity="0.38" />
-      <rect x={x} y={y} width={w} height={h} rx="19" fill="url(#benchTop)" stroke="#0a0d1a" strokeWidth="6" />
-      <rect x={x + 6} y={y + 5} width={w - 12} height="5" rx="2.5" fill="#8695c0" opacity="0.3" />
-      <g stroke="#1b2138" strokeWidth="4" opacity="0.75">
+      <rect x={x - 4} y={y + 8} width={w + 12} height={h + 8} rx="20" fill="#090410" opacity="0.38" />
+      <rect x={x} y={y} width={w} height={h} rx="19" fill="url(#benchTop)" stroke="#10091b" strokeWidth="6" />
+      <rect x={x + 6} y={y + 5} width={w - 12} height="5" rx="2.5" fill="#9783c3" opacity="0.3" />
+      <g stroke="#181233" strokeWidth="4" opacity="0.75">
         {Array.from({ length: n }, (_, i) =>
           slats === 'v' ? (
             <path key={i} d={`M${x + 8} ${y + 28 + i * 50}h${w - 16}`} />
@@ -423,13 +423,13 @@ function Bench({ x, y, w, h, slats }) {
 function Crate({ x, y, s, tone, cap, label }) {
   return (
     <g className="cargo">
-      <rect x={x + 5} y={y + 9} width={s} height={s} rx="10" fill="#05070f" opacity="0.4" />
-      <rect x={x} y={y} width={s} height={s} rx="10" fill={tone} stroke="#0a0d1a" strokeWidth="6" />
+      <rect x={x + 5} y={y + 9} width={s} height={s} rx="10" fill="#090410" opacity="0.4" />
+      <rect x={x} y={y} width={s} height={s} rx="10" fill={tone} stroke="#10091b" strokeWidth="6" />
       <rect x={x + 8} y={y + 8} width={s - 16} height={s - 16} rx="6" fill={cap} opacity="0.42" />
       {/* lid highlight + seam */}
       <path d={`M${x + 9} ${y + 9}h${s - 18}`} stroke="#fff" strokeWidth="3" opacity="0.2" />
-      <path d={`M${x + 8} ${y + s / 2}h${s - 16}`} stroke="#0a0d1a" strokeWidth="5" opacity="0.6" />
-      <g fill="#0a0d1a" opacity="0.72">
+      <path d={`M${x + 8} ${y + s / 2}h${s - 16}`} stroke="#10091b" strokeWidth="5" opacity="0.6" />
+      <g fill="#10091b" opacity="0.72">
         <rect x={x + 7} y={y + 7} width="13" height="5" rx="2" />
         <rect x={x + s - 20} y={y + 7} width="13" height="5" rx="2" />
         <rect x={x + 7} y={y + s - 12} width="13" height="5" rx="2" />

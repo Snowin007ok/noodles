@@ -13,6 +13,7 @@
 
 /* ---------------- HUD strip ---------------- */
 
+/* Arcade marquee: pixel-font score readouts, neon-edged cabinet strip. */
 .hud {
   display: flex;
   align-items: center;
@@ -21,31 +22,41 @@
   padding: var(--s3) clamp(16px, 1.8vw, 30px);
   border: var(--bw) solid var(--ink);
   border-radius: var(--r-lg);
-  background: linear-gradient(180deg, #2b3457 0%, #161c33 100%);
+  background: linear-gradient(180deg, #251a4d 0%, #130c2b 100%);
   box-shadow:
     0 var(--drop) 0 var(--ink),
-    inset 0 2px 0 rgba(255, 255, 255, 0.1);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  font-size: clamp(0.74rem, 1.05vw, 1.05rem);
+    inset 0 2px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 2px rgba(255, 61, 220, 0.14);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 0.72vw, 0.72rem);
+  letter-spacing: 0.06em;
   flex: 0 0 auto;
+}
+
+.hud-round,
+.hud-pool {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .hud-round strong,
 .hud-pool strong {
   color: var(--amber);
-  font-size: 1.5em;
-  font-weight: 700;
-  margin: 0 3px;
+  font-size: 1.9em;
+  text-shadow: 0 0 12px rgba(255, 226, 61, 0.7);
 }
 
 .hud-mode {
   padding: var(--s2) var(--s5);
   border-radius: 999px;
-  background: rgba(79, 227, 255, 0.13);
-  border: 2px solid rgba(79, 227, 255, 0.42);
+  background: rgba(61, 242, 255, 0.1);
+  border: 2px solid rgba(61, 242, 255, 0.45);
   color: var(--cyan);
-  font-weight: 600;
+  box-shadow: inset 0 0 12px rgba(61, 242, 255, 0.12), 0 0 14px rgba(61, 242, 255, 0.2);
+  text-shadow: 0 0 8px rgba(61, 242, 255, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
