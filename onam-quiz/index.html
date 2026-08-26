@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Great Onam Quiz — Maveli's Challenge</title>
+  <meta name="description" content="An immersive Onam festival quiz. King Mahabali himself checks your answers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#D4AF37">
+</head>
+<body>
+<!--
+THESIS: The festival itself is the interface — a visit to Maveli's kingdom where
+the pookalam, the kasavu weave and the sadya leaf hold the quiz. Refuses the
+generic gradient-card quiz template.
+OWN-WORLD: Kasavu cream ground (#F9F6EE) bound by woven gold zari bands with a
+vermilion thread; marigold/gold/vermilion pookalam mandala (generated SVG);
+forest-green ink; deep banana-leaf question stage; brass nilavilakku, chundan
+vallam and elephant line art; talking Maveli mascot (3 poses) with speech bubble.
+STORY: The visitor is welcomed by King Mahabali, answers 12 questions about his
+festival while he praises, corrects and teases them, and leaves with a blessing
+sized to their score.
+FIRST VIEWPORT: Slow-turning pookalam crowning the title, snake-boat divider,
+brass Start button flanked by lit nilavilakku lamps, kasavu bands top and
+bottom, petals drifting, Maveli waving bottom-right with a greeting bubble.
+FORM: Brief-pinned festival stage (user-specified palette, motifs, mascot, music).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the
+finish review, the verdict, and DESIGN.md
+-->
+
+  <!-- Decorative festival layers -->
+  <div class="kasavu-band kasavu-top" aria-hidden="true"></div>
+  <div class="kasavu-band kasavu-bottom" aria-hidden="true"></div>
+  <div class="leaf-corner leaf-tl" aria-hidden="true">
+    <svg viewBox="0 0 320 320"><path class="leaf-blade" d="M8 6 C150 20 280 140 310 312 C170 290 40 180 8 6 Z"/><path class="leaf-rib" d="M14 12 C120 110 220 210 300 302"/><g class="leaf-veins"><path d="M60 40 C90 90 120 130 150 160"/><path d="M40 90 C75 135 110 175 145 205"/><path d="M30 150 C65 190 105 225 145 250"/><path d="M35 210 C70 245 110 272 150 290"/><path d="M110 30 C140 70 170 105 200 135"/><path d="M170 60 C200 95 230 130 255 160"/><path d="M220 105 C245 135 268 165 285 195"/></g></svg>
+  </div>
+  <div class="leaf-corner leaf-br" aria-hidden="true">
+    <svg viewBox="0 0 320 320"><path class="leaf-blade" d="M8 6 C150 20 280 140 310 312 C170 290 40 180 8 6 Z"/><path class="leaf-rib" d="M14 12 C120 110 220 210 300 302"/><g class="leaf-veins"><path d="M60 40 C90 90 120 130 150 160"/><path d="M40 90 C75 135 110 175 145 205"/><path d="M30 150 C65 190 105 225 145 250"/><path d="M35 210 C70 245 110 272 150 290"/><path d="M110 30 C140 70 170 105 200 135"/><path d="M170 60 C200 95 230 130 255 160"/><path d="M220 105 C245 135 268 165 285 195"/></g></svg>
+  </div>
+  <div id="petal-layer" aria-hidden="true"></div>
+
+  <!-- Music toggle -->
+  <button id="music-toggle" class="music-toggle" type="button" aria-pressed="false" aria-label="Toggle festival music">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path class="note" d="M9 18.5 V6 l9 -2.2 V16" fill="none"/>
+      <circle class="note" cx="6.8" cy="18.5" r="2.6"/>
+      <circle class="note" cx="15.8" cy="16" r="2.6"/>
+      <line class="mute-line" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/>
+    </svg>
+  </button>
+
+  <!-- Day / Thiruvonam-night switch -->
+  <button id="theme-toggle" class="theme-switch" type="button" role="switch" aria-checked="false" aria-label="Night mode">
+    <svg class="switch-sun" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.4"/>
+      <g><line x1="12" y1="2" x2="12" y2="5.4"/><line x1="12" y1="18.6" x2="12" y2="22"/>
+      <line x1="2" y1="12" x2="5.4" y2="12"/><line x1="18.6" y1="12" x2="22" y2="12"/>
+      <line x1="5" y1="5" x2="7.3" y2="7.3"/><line x1="16.7" y1="16.7" x2="19" y2="19"/>
+      <line x1="5" y1="19" x2="7.3" y2="16.7"/><line x1="16.7" y1="7.3" x2="19" y2="5"/></g>
+    </svg>
+    <svg class="switch-moon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19.5 14.5 A8 8 0 1 1 9.5 4.5 A6.6 6.6 0 0 0 19.5 14.5 Z"/>
+      <circle cx="17.5" cy="6.5" r="0.9"/><circle cx="20" cy="9.8" r="0.6"/><circle cx="15.2" cy="9" r="0.5"/>
+    </svg>
+    <span class="switch-knob" aria-hidden="true"></span>
+  </button>
+
+  <!-- Maveli's voice on/off -->
+  <button id="voice-toggle" class="music-toggle voice-toggle" type="button" aria-pressed="true" aria-label="Toggle Maveli's voice">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path class="vt-body" d="M4 9.5 v5 h3.5 L13 19 V5 L7.5 9.5 Z"/>
+      <path class="vt-wave" d="M16 9 c1.6 1.6 1.6 4.4 0 6" fill="none"/>
+      <path class="vt-wave" d="M18.4 6.8 c2.8 2.8 2.8 7.6 0 10.4" fill="none"/>
+      <line class="vt-mute" x1="4" y1="4" x2="20" y2="20"/>
+    </svg>
+  </button>
+
+  <main id="app">
+
+    <!-- ============ START SCREEN ============ -->
+    <section id="screen-start" class="screen active" aria-labelledby="title">
+      <div class="pookalam-wrap">
+        <div id="pookalam-hero" class="pookalam spin"></div>
+        <p class="pookalam-heart" lang="ml">ഓണം</p>
+      </div>
+      <h1 id="title">The Great Onam Quiz</h1>
+      <p class="intro">
+        The pookalam is laid, the sadya leaf is waiting, and King Mahabali has
+        risen from Patala for his yearly visit. Answer <strong>12 questions</strong>
+        about his festival — he will be watching every one.
+      </p>
+      <div class="boat-divider" aria-hidden="true">
+        <svg viewBox="0 0 560 84">
+          <path class="boat-hull" d="M18 30 C90 66 210 76 300 76 C400 76 470 62 505 38 C516 30 528 16 534 4 C540 22 536 42 520 56 C480 78 390 84 300 84 C200 84 90 74 18 40 Z" transform="translate(0,-6)"/>
+          <path class="boat-line" d="M30 42 C110 68 210 74 300 74 C395 74 465 60 512 30" fill="none"/>
+          <g class="boat-oars">
+            <line x1="120" y1="62" x2="104" y2="82"/><line x1="170" y1="66" x2="156" y2="84"/>
+            <line x1="220" y1="68" x2="208" y2="84"/><line x1="270" y1="69" x2="260" y2="84"/>
+            <line x1="320" y1="68" x2="312" y2="84"/><line x1="370" y1="66" x2="364" y2="84"/>
+            <line x1="420" y1="61" x2="416" y2="82"/>
+          </g>
+          <circle class="boat-finial" cx="534" cy="6" r="4"/>
+        </svg>
+      </div>
+      <div class="name-row">
+        <label class="name-label" for="name-input">Who greets Maveli?</label>
+        <input id="name-input" class="name-input" type="text" maxlength="20" placeholder="Your name (optional)" autocomplete="off">
+      </div>
+      <div class="start-row">
+        <span class="lamp" aria-hidden="true">
+          <svg viewBox="0 0 60 96">
+            <path class="lamp-flame" d="M30 4 C36 14 39 20 30 30 C21 20 24 14 30 4 Z"/>
+            <path class="lamp-metal" d="M14 34 h32 c0 8 -7 13 -16 13 c-9 0 -16 -5 -16 -13 Z"/>
+            <rect class="lamp-metal" x="27" y="47" width="6" height="14" rx="2"/>
+            <path class="lamp-metal" d="M10 62 h40 c0 9 -9 14 -20 14 c-11 0 -20 -5 -20 -14 Z"/>
+            <rect class="lamp-metal" x="12" y="82" width="36" height="7" rx="3"/>
+          </svg>
+        </span>
+        <button id="btn-start" class="btn btn-brass" type="button">Start Quiz</button>
+        <span class="lamp" aria-hidden="true">
+          <svg viewBox="0 0 60 96">
+            <path class="lamp-flame" d="M30 4 C36 14 39 20 30 30 C21 20 24 14 30 4 Z"/>
+            <path class="lamp-metal" d="M14 34 h32 c0 8 -7 13 -16 13 c-9 0 -16 -5 -16 -13 Z"/>
+            <rect class="lamp-metal" x="27" y="47" width="6" height="14" rx="2"/>
+            <path class="lamp-metal" d="M10 62 h40 c0 9 -9 14 -20 14 c-11 0 -20 -5 -20 -14 Z"/>
+            <rect class="lamp-metal" x="12" y="82" width="36" height="7" rx="3"/>
+          </svg>
+        </span>
+      </div>
+      <p id="start-best" class="start-best" hidden>Your royal record: 0 / 12</p>
+      <p class="start-hint">Press <kbd>F</kbd> for fullscreen &middot; <kbd>1</kbd>&ndash;<kbd>4</kbd> to answer</p>
+      <p class="start-note" lang="ml">ഓണാശംസകൾ</p>
+    </section>
+
+    <!-- ============ QUIZ SCREEN ============ -->
+    <section id="screen-quiz" class="screen" aria-labelledby="question-text">
+      <header class="quiz-head">
+        <p id="progress-label" class="progress-label">Question 1 of 12</p>
+        <p id="progress-pct" class="progress-pct">0%</p>
+      </header>
+      <div class="progress-wrap">
+        <div class="progress-track" role="progressbar" aria-labelledby="progress-label" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" id="progress-track">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <span id="progress-lamp" class="progress-lamp" aria-hidden="true">
+          <svg viewBox="0 0 40 52">
+            <g class="flame-scaler">
+              <path class="lamp-flame" d="M20 2 C24 9 26 13 20 20 C14 13 16 9 20 2 Z"/>
+            </g>
+            <path class="lamp-metal" d="M8 22 h24 c0 7 -6 11 -12 11 c-6 0 -12 -4 -12 -11 Z"/>
+            <rect class="lamp-metal" x="14" y="37" width="12" height="5" rx="2"/>
+            <rect class="lamp-metal" x="10" y="44" width="20" height="5" rx="2.5"/>
+          </svg>
+        </span>
+      </div>
+
+      <article class="leaf-stage">
+        <div class="leaf-midrib" aria-hidden="true"></div>
+        <h2 id="question-text" tabindex="-1">Question loads here</h2>
+      </article>
+
+      <div id="options" class="options"></div>
+
+      <footer class="quiz-foot">
+        <div class="foot-left">
+          <p id="score-chip" class="score-chip">Score <strong id="score-live">0</strong></p>
+          <button id="btn-lifeline" class="btn-lifeline" type="button" title="Once per game">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 C15 6 17 9 12 13 C7 9 9 6 12 2 Z"/><rect x="8" y="14" width="8" height="4" rx="2"/><rect x="6" y="19" width="12" height="3" rx="1.5"/></svg>
+            Ask Maveli
+          </button>
+        </div>
+        <button id="btn-next" class="btn btn-brass btn-next" type="button" hidden>Next Question</button>
+      </footer>
+    </section>
+
+    <!-- ============ RESULTS SCREEN ============ -->
+    <section id="screen-results" class="screen" aria-labelledby="results-title">
+      <div class="results-elephant" aria-hidden="true">
+        <svg viewBox="0 0 220 150">
+          <path class="ele-body" d="M28 138 C20 108 22 78 44 60 C64 42 96 38 124 46 C138 34 158 30 174 38 C192 46 200 62 198 78 C210 82 214 94 208 102 C204 96 197 92 190 94 C192 108 186 118 178 122 L178 138 L162 138 L162 126 C148 132 120 132 104 126 L104 138 L88 138 L88 122 C70 124 48 128 44 138 Z"/>
+          <path class="ele-trunk" d="M196 80 C202 96 200 116 188 128 C182 134 172 136 166 132" fill="none"/>
+          <path class="ele-ear" d="M138 56 C128 62 124 76 130 88 C136 98 150 100 158 92 C164 84 162 68 154 60 C149 55 143 54 138 56 Z"/>
+          <path class="ele-tusk" d="M186 108 C190 114 190 122 186 127" fill="none"/>
+          <g class="ele-netti">
+            <path d="M168 40 C180 44 190 54 194 66" fill="none"/>
+            <circle cx="172" cy="45" r="2.4"/><circle cx="180" cy="50" r="2.4"/>
+            <circle cx="187" cy="57" r="2.4"/><circle cx="191" cy="65" r="2.4"/>
+          </g>
+          <circle class="ele-eye" cx="166" cy="58" r="2.6"/>
+        </svg>
+      </div>
+      <h2 id="results-title">The Feast Is Over!</h2>
+      <p id="final-score" class="final-score">You scored <strong>0 / 12</strong></p>
+      <p id="final-message" class="final-message">Message appears here.</p>
+      <p id="best-line" class="best-line"></p>
+      <div id="sadya" class="sadya"></div>
+      <p id="sadya-line" class="sadya-line"></p>
+      <div class="results-actions">
+        <button id="btn-restart" class="btn btn-brass" type="button">Play Again</button>
+        <button id="btn-share" class="btn btn-leaf" type="button">Share My Score</button>
+        <button id="btn-card" class="btn btn-leaf" type="button">Download Blessing Card</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Vamana's Three Steps — skippable legend -->
+  <div id="story" class="story" hidden></div>
+
+  <!-- Pooram finale for a perfect score -->
+  <canvas id="pooram" class="pooram" hidden aria-hidden="true"></canvas>
+  <div class="parade-strip" aria-hidden="true">
+    <img src="assets/maveli-1.png" alt="">
+    <img src="assets/maveli-2.png" alt="">
+    <img src="assets/maveli-3.png" alt="">
+  </div>
+
+  <!-- Your pookalam grows with every correct answer -->
+  <aside id="kalam-corner" class="kalam-corner" aria-label="Your pookalam progress">
+    <div id="kalam" class="kalam"></div>
+    <p id="kalam-day" class="kalam-day">Lay your pookalam</p>
+  </aside>
+
+  <!-- ============ MAVELI ============ -->
+  <figure id="maveli" class="maveli hidden-entry" title="Say hello to Maveli">
+    <div id="bubble" class="bubble" role="status" aria-live="polite" hidden>
+      <span id="bubble-text"></span>
+    </div>
+    <div class="tears" aria-hidden="true">
+      <span class="tear t1"></span>
+      <span class="tear t2"></span>
+      <span class="tear t3"></span>
+    </div>
+    <img id="maveli-img" src="assets/maveli-3.png" alt="King Mahabali, smiling under his royal umbrella" width="516" height="700">
+  </figure>
+
+  <audio id="bgm" src="assets/onam-music.mp3" loop preload="auto"></audio>
+  <audio id="bgm-end" src="assets/onam-finale.mp3" loop preload="auto"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>

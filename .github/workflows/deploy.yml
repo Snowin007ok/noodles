@@ -27,6 +27,8 @@ jobs:
       - run: npm run build
         env:
           GITHUB_PAGES: "true"
+      # The Onam quiz is a standalone static app, served at /onam-quiz/
+      - run: cp -r onam-quiz dist/onam-quiz
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
