@@ -165,7 +165,7 @@ function ControlTab({ state, dispatch, actions, clock }) {
       {mode === 'volunteer' && (
         <div className="open-note">
           <strong>✋ VOLUNTEER ROUND</strong>
-          <span>Tap the card of whoever answered — or let the algorithm pick if nobody does.</span>
+          <span>Reveal, then tap the name of whoever answered — or let the algorithm pick if nobody does.</span>
         </div>
       )}
 
@@ -283,36 +283,6 @@ function ControlTab({ state, dispatch, actions, clock }) {
             disabled={!state.audio.enabled}
           />
           <i>{Math.round(state.audio.volume * 100)}%</i>
-        </label>
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={state.showNames}
-            onChange={(e) => dispatch({ type: 'names/set', value: e.target.checked })}
-          />
-          <span>Show names on cards</span>
-        </label>
-
-        {/* Cards on the feed. Selection always uses the FULL roster — this only
-            controls how many cards are drawn, so a big class doesn't turn the
-            feed into a wall of thumbnails. */}
-        <label className="slider">
-          <span>Cards shown</span>
-          <input
-            type="range"
-            min="6"
-            max="45"
-            step="1"
-            value={state.displayCap === 0 ? 45 : Math.min(45, state.displayCap)}
-            style={{
-              '--fill': `${(((state.displayCap === 0 ? 45 : Math.min(45, state.displayCap)) - 6) / 39) * 100}%`,
-            }}
-            onChange={(e) => {
-              const v = Number(e.target.value)
-              dispatch({ type: 'displayCap/set', value: v >= 45 ? 0 : v })
-            }}
-          />
-          <i>{state.displayCap === 0 ? 'All' : state.displayCap}</i>
         </label>
         <label className="switch">
           <input

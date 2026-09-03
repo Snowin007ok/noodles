@@ -24,16 +24,19 @@ away.
 
 NOODLES turns "who answers the next question?" into a game built on the
 session's own topic — *From Scroll to Soul: How Digital Evolution Shaped
-Generations*. The class stands as townsfolk of every age on a warm, hand-drawn
-street whose left half is the older world (post office and letterbox, radio &
-TV shop, telephone booth, newspaper stand, a tree with a swing) and whose
-right half is the new one (café full of laptops, phone billboard, glass
-offices, a signal tower) — the sky itself grades from a nostalgic sunset into
-a clear morning. The algorithm scrolls the crowd and stops on someone ("THE
-ALGORITHM CHOSE"), the question takes over the whole screen, and a hard
-2-minute clock decides whether they answered or get logged out — permanently,
-for the rest of the session. A then→now ribbon gives life and technology
-equal weight (user-confirmed: 50/50, "it's life too").
+Generations*. A warm, hand-drawn street is the backdrop: its left half the
+older world (post office and letterbox, radio & TV shop, telephone booth,
+newspaper stand, a tree with a swing), its right half the new one (café full
+of laptops, phone billboard, glass offices, a signal tower), the sky grading
+from a nostalgic sunset into a clear morning. In the middle stands a vintage
+wood-and-brass **name reel**: the class lives inside it as name plates. On a
+pick the reel spins hard, blurs, decelerates with the clack of a ratchet and
+lands one plate dead centre as the marquee bulbs flash — nobody knows where
+it stops until it does ("THE ALGORITHM CHOSE"). The question then takes over
+the whole screen and a hard 2-minute clock decides whether they answered or
+get logged out — permanently, for the rest of the session. A then→now ribbon
+gives life and technology equal weight (user-confirmed: 50/50, "it's life
+too"). No characters on stage (user-confirmed: removed in favour of the reel).
 
 Success (user-confirmed): one specific upcoming event runs flawlessly —
 projector-legible, every button works live in front of the room, the drama

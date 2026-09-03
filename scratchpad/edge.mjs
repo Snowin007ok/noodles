@@ -161,6 +161,15 @@ check('legacy text kept, missing slots filled', m.questions[0].text === 'OLD ONE
 check('legacy rounds padded to ten', m.rounds.length === 10 && m.rounds[0].status === 'answered')
 localStorage.clear()
 
+// --- 15. the reel is told where to stop at spin start, and forgets it on load
+let sp = initialState()
+sp = reducer(sp, { type: 'spin/start', target: sp.students[4].id })
+check('spin/start stores the reel target', sp.spinTarget === sp.students[4].id && sp.phase === 'spinning')
+save(sp)
+const reloaded = load()
+check('reload lands in the lobby with no target', reloaded.phase === 'lobby' && reloaded.spinTarget === null)
+localStorage.clear()
+
 const failed = results.filter(r => !r.pass)
 for (const r of results) console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}${r.detail?'  — '+r.detail:''}`)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)

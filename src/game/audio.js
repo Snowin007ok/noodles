@@ -187,7 +187,34 @@ class AudioEngine {
     this._track(osc)
   }
 
-  /** Notification ping, fired on each card the algorithm lights up. */
+  /**
+   * The ratchet of the reel: a short, woody clack per plate as the names go
+   * by. A burst of filtered noise plus a low knock — it slows with the reel.
+   */
+  clack(strength = 1) {
+    if (!this.ctx || !this.enabled) return
+    const t0 = this.ctx.currentTime
+    const len = Math.floor(this.ctx.sampleRate * 0.03)
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len)
+    const src = this.ctx.createBufferSource()
+    src.buffer = buf
+    const filter = this.ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = 1400 + 600 * strength
+    filter.Q.value = 1.2
+    const g = this.ctx.createGain()
+    g.gain.setValueAtTime(0.12 * strength, t0)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04)
+    src.connect(filter).connect(g).connect(this.master)
+    src.start(t0)
+    src.stop(t0 + 0.05)
+    this._track(src)
+    this._note({ type: 'square', freq: 150, dur: 0.03, gain: 0.04 * strength })
+  }
+
+  /** Notification ping — a softer tick for lighter moments. */
   ping(strength = 1) {
     if (!this.ctx || !this.enabled) return
     this._note({ type: 'sine', freq: 1320 + 380 * strength, dur: 0.07, gain: 0.05 * strength })

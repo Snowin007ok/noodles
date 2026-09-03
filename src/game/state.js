@@ -83,7 +83,8 @@ export function initialState() {
     pool: buildPool(students.map((s) => s.id)),
     lastDrawn: null,
     phase: 'lobby',
-    spotlightId: null, // card currently lit by the scrolling algorithm
+    spotlightId: null, // name currently lit by the scrolling algorithm (audio ticks)
+    spinTarget: null, // where the reel will stop — decided at spin start, revealed at lock-in
     caughtId: null, // student locked in for this round
     audio: { enabled: true, volume: 0.8 },
     reducedMotion: false,
@@ -149,7 +150,7 @@ export function load() {
 
     // Never restore mid-animation — a refresh should land in a stable lobby.
     const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
-    const merged = { ...base, ...saved, phase, spotlightId: null, questions }
+    const merged = { ...base, ...saved, phase, spotlightId: null, spinTarget: null, questions }
 
     merged.displayCap = num(merged.displayCap, base.displayCap, 0, 500)
     merged.currentRound = num(merged.currentRound, 1, 1, TOTAL_ROUNDS)
@@ -345,7 +346,14 @@ export function reducer(state, action) {
      *  reveal into the fresh takeover. */
     case 'spin/start':
       return patchRound(
-        { ...state, phase: 'spinning', caughtId: null, spotlightId: null },
+        {
+          ...state,
+          phase: 'spinning',
+          caughtId: null,
+          spotlightId: null,
+          // The draw is already made; the reel needs to know where to stop.
+          spinTarget: action.target ?? null,
+        },
         state.currentRound,
         {
           status: 'pending',

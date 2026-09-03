@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import Lobby from './components/Lobby'
 import TeacherPanel from './components/TeacherPanel'
 import HostBar from './components/HostBar'
-import { CaughtBanner, ModeBanner, QuestionCard, SessionSummary } from './components/Overlays'
+import { CaughtBanner, QuestionCard, SessionSummary } from './components/Overlays'
 import { reducer, load, save, displayName, modeOf } from './game/state'
 import { drawFrom } from './game/shuffle'
 import { audio } from './game/audio'
@@ -259,21 +259,22 @@ export default function App() {
     // 'lobby' phase and would each draw a card off the deck.
     spinning.current = true
 
-    // Re-running abandons whoever was on the clock. Without this the old
-    // deadline keeps running and logs out the PREVIOUS student mid-pick.
-    stopClock()
-    resetStage()
-    dispatch({ type: 'spin/start' })
-
     // Draw once, here, from the current deck. Keeping the RNG out of the
     // reducer makes the reducer pure and StrictMode-safe.
-    // Logged-out students are off the street and out of the running.
+    // Logged-out students are out of the reel and out of the running.
     const ids = state.students.filter((s) => !s.ejected).map((s) => s.id)
     const draw = drawFrom(state.pool, ids, state.lastDrawn)
     if (!draw.id) {
       spinning.current = false
       return
     }
+
+    // Re-running abandons whoever was on the clock. Without this the old
+    // deadline keeps running and logs out the PREVIOUS student mid-pick.
+    stopClock()
+    resetStage()
+    // The reel is told where it will stop now; the room finds out at lock-in.
+    dispatch({ type: 'spin/start', target: draw.id })
 
     // Unlock inside the click handler — this is the user gesture that satisfies
     // the browser's autoplay policy. Nothing has played before now.
@@ -307,7 +308,7 @@ export default function App() {
           }
           last = pick
           dispatch({ type: 'spin/spotlight', id: pick })
-          audio.ping(0.6 + p * 0.4)
+          audio.clack(0.6 + p * 0.4)
         }, when),
       )
       elapsed += gap
@@ -498,26 +499,19 @@ export default function App() {
 
         <Lobby
           students={state.students}
-          spotlightId={state.spotlightId}
+          spinTarget={state.spinTarget}
           caughtId={state.caughtId}
           phase={state.phase}
           mode={mode}
           alarm={stageAlarm}
           launching={stageLaunching}
-          pickMode={pickMode}
-          showNames={state.showNames}
-          displayCap={state.displayCap}
-          answeredById={round?.answeredById}
-          onPick={pickAnswerer}
+          roundNumber={state.currentRound}
+          spinMs={T.spin}
           onLoadSample={() => dispatch({ type: 'roster/loadSample' })}
         />
 
         {state.phase === 'caught' && caught && (
           <CaughtBanner name={displayName(caught).toUpperCase()} visible={showCaughtBanner} />
-        )}
-
-        {mode !== 'students' && state.phase === 'lobby' && !round.revealed && (
-          <ModeBanner mode={mode} visible />
         )}
 
         {(state.phase === 'question' || state.phase === 'ejecting') && (
