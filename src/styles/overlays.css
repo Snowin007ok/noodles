@@ -29,7 +29,7 @@
   padding: clamp(16px, 2.4vw, 34px) clamp(20px, 3vw, 48px);
   border: 5px solid var(--ink);
   border-radius: var(--r-lg);
-  background: rgba(5, 7, 10, 0.97);
+  background: rgba(30, 22, 20, 0.97);
   box-shadow:
     0 8px 0 var(--ink),
     0 30px 80px rgba(0, 0, 0, 0.7);
@@ -79,7 +79,7 @@
 /* ---- open-question variant ---- */
 
 .banner--open .banner-inner {
-  background: rgba(5, 7, 10, 0.97);
+  background: rgba(30, 22, 20, 0.97);
   box-shadow:
     0 8px 0 var(--ink),
     0 30px 80px rgba(0, 0, 0, 0.7);
@@ -128,15 +128,11 @@
   padding: clamp(12px, 2vw, 32px);
   border-radius: var(--r-lg);
   border: 5px solid var(--ink);
-  /* The ejection screen: flat black space with a thin drift of stars.
-     Fully opaque — nothing from the room may ghost through the question. */
+  /* A warm dark stage curtain. Fully opaque — nothing from the street may
+     ghost through the question. */
   background:
-    radial-gradient(1.6px 1.6px at 14% 24%, #fff 50%, transparent 51%),
-    radial-gradient(1.2px 1.2px at 72% 12%, #cfe6ff 50%, transparent 51%),
-    radial-gradient(1.8px 1.8px at 88% 66%, #fff 50%, transparent 51%),
-    radial-gradient(1.2px 1.2px at 28% 82%, #cfe6ff 50%, transparent 51%),
-    radial-gradient(1.4px 1.4px at 52% 46%, #fff 50%, transparent 51%),
-    #05070a;
+    radial-gradient(90% 60% at 50% 0%, rgba(242, 177, 52, 0.2) 0%, transparent 60%),
+    linear-gradient(180deg, #2b1f1c 0%, #17110f 100%);
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.75);
   animation: takeoverIn 340ms cubic-bezier(0.2, 1.3, 0.4, 1);
   overflow: auto;
@@ -259,10 +255,8 @@
   border-radius: var(--r-lg);
   border: 5px solid var(--ink);
   background:
-    radial-gradient(1.6px 1.6px at 18% 28%, #fff 50%, transparent 51%),
-    radial-gradient(1.3px 1.3px at 78% 18%, #cfe6ff 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 62% 78%, #fff 50%, transparent 51%),
-    #05070a;
+    radial-gradient(90% 60% at 50% 0%, rgba(42, 179, 166, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #2b1f1c 0%, #17110f 100%);
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.78);
   animation: takeoverIn 340ms cubic-bezier(0.2, 1.3, 0.4, 1);
   overflow: auto;
@@ -589,3 +583,62 @@
 .qcard--volunteer .qcard-round em { color: var(--amber); }
 
 .sstat--warn strong { color: var(--amber); }
+
+/* ==========================================================
+   Takeover variants — guest (sage) and volunteer (gold), plus the
+   volunteer name-chip wall the host taps from.
+   ========================================================== */
+
+.takeover--guest .takeover-kicker { color: var(--green); }
+.takeover--volunteer .takeover-kicker { color: var(--amber); }
+
+/* A label headline ("OVER TO OUR GUEST") reads smaller than a person's name. */
+.takeover-name--label {
+  font-size: clamp(1.8rem, 6.5vw, 5.6rem);
+  letter-spacing: 0.06em;
+}
+
+.takeover--guest .takeover-name--label { color: #d7f0c9; }
+.takeover--volunteer .takeover-name--label { color: #ffe1a3; }
+
+.takeover-picks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(6px, 0.8vw, 12px);
+  width: min(100%, 1300px);
+  max-height: 34vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.pick-chip {
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #fff6e8;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(0.85rem, 1.3vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--ink);
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+
+.pick-chip:hover,
+.pick-chip:focus-visible {
+  background: var(--amber);
+  transform: translateY(-1px);
+}
+
+.pick-chip:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.pick-chip--done {
+  opacity: 0.55;
+}

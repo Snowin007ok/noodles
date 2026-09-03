@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import Lobby from './components/Lobby'
 import TeacherPanel from './components/TeacherPanel'
+import HostBar from './components/HostBar'
 import { CaughtBanner, ModeBanner, QuestionCard, SessionSummary } from './components/Overlays'
 import { reducer, load, save, displayName, modeOf } from './game/state'
 import { drawFrom } from './game/shuffle'
@@ -17,11 +18,31 @@ import {
   MODE_COPY,
 } from './game/constants'
 
+const PRESENTER_KEY = 'noodles.presenter'
+
 export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, load)
   const appRef = useRef(null)
   const viewMode = useMemo(() => new URLSearchParams(window.location.search).get('view'), [])
   const stageOnly = viewMode === 'stage' || viewMode === 'projector'
+
+  /* Presenter mode: the audience sees only the street. The full panel folds
+     away and a slim host bar carries the round's controls. Per-window, so a
+     laptop can stay in control mode while a second window presents. */
+  const [presenter, setPresenter] = useState(() => {
+    try {
+      return localStorage.getItem(PRESENTER_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESENTER_KEY, presenter ? '1' : '0')
+    } catch {
+      /* storage unavailable — preference just won't persist */
+    }
+  }, [presenter])
 
   /* Transient animation flags — deliberately kept out of the reducer so they
      are never persisted and a refresh can't strand us mid-logout. */
@@ -118,8 +139,8 @@ export default function App() {
     audio.stopAll()
   }, [clearTimers])
 
-  /* Changing rounds mid-flight must never leave a card half swiped or the
-     previous round's clock running. */
+  /* Changing rounds mid-flight must never leave a figure half off the street
+     or the previous round's clock running. */
   useEffect(() => {
     resetStage()
     stopClock()
@@ -148,7 +169,7 @@ export default function App() {
 
   /* ---------------- the logout ----------------
      Runs when the clock hits zero on a student. This is the only path that
-     swipes a card off the feed — being picked merely starts the countdown. */
+     walks a figure off the street — being picked merely starts the countdown. */
   const ejectSequence = useCallback(
     async (victim) => {
       clearTimers()
@@ -158,13 +179,13 @@ export default function App() {
       if (ok) {
         await audio.load()
         audio.logout()
-        // Land the sting's 1.18s impact on the swipe frame.
+        // Land the sting's 1.18s impact on the walk-off frame.
         audio.playSting(Math.max(0, E.launch - E.audioPeakOffset))
       }
 
       setAlarm(true)
       at(E.launch, () => setLaunching(true))
-      // Once they are off the feed they are gone for good — no drift back in.
+      // Once they are off the street they are gone for good — no wandering back.
       at(E.gone, () => {
         dispatch({ type: 'student/eject', id: victim })
         setLaunching(false)
@@ -246,7 +267,7 @@ export default function App() {
 
     // Draw once, here, from the current deck. Keeping the RNG out of the
     // reducer makes the reducer pure and StrictMode-safe.
-    // Logged-out students are off the feed and out of the running.
+    // Logged-out students are off the street and out of the running.
     const ids = state.students.filter((s) => !s.ejected).map((s) => s.id)
     const draw = drawFrom(state.pool, ids, state.lastDrawn)
     if (!draw.id) {
@@ -271,7 +292,7 @@ export default function App() {
       }
     }
 
-    /* The scroll: cards light up fast at first, easing out into the lock-in. */
+    /* The scroll: figures light up fast at first, easing out into the lock-in. */
     let elapsed = 0
     let last = null
     while (elapsed < T.spin - 60) {
@@ -292,8 +313,8 @@ export default function App() {
       elapsed += gap
     }
 
-    /* Lock-in → notification pulse → banner → question on screen.
-       No logout here: the feed only drops someone if the clock runs out. */
+    /* Lock-in → pulse → banner → question on screen.
+       No logout here: the street only loses someone if the clock runs out. */
     at(T.spin, () => dispatch({ type: 'spin/commit', id: draw.id, pool: draw.pool }))
     at(T.alarm, () => setAlarm(true))
     at(T.banner, () => setBannerIn(true))
@@ -353,9 +374,17 @@ export default function App() {
     audio.unlock().then((ok) => ok && audio.verified())
   }, [stageOnly, stopClock])
 
+  const togglePresenter = useCallback(() => setPresenter((v) => !v), [])
+
+  const openProjector = useCallback(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', 'stage')
+    window.open(url.toString(), 'noodles-projector')
+  }, [])
+
   const actions = useMemo(
-    () => ({ spin, setAudio, reveal, guestAnswered }),
-    [spin, setAudio, reveal, guestAnswered],
+    () => ({ spin, setAudio, reveal, guestAnswered, togglePresenter, openProjector }),
+    [spin, setAudio, reveal, guestAnswered, togglePresenter, openProjector],
   )
 
   const toggleFullscreen = useCallback(async () => {
@@ -384,7 +413,8 @@ export default function App() {
       const map = {
         s: () => spin(),
         r: () => !busy && reveal(),
-        g: () => !busy && mode === 'guest' && round.revealed && round.status === 'pending' && guestAnswered(),
+        g: () =>
+          !busy && mode === 'guest' && round.revealed && round.status === 'pending' && guestAnswered(),
         // Space starts the clock. Once running nothing stops it.
         space: () => {
           if (!busy && deadline == null && round.revealed && round.status === 'pending')
@@ -394,6 +424,7 @@ export default function App() {
         p: () => !busy && dispatch({ type: 'round/goto', number: state.currentRound - 1 }),
         m: () => setAudio({ enabled: !state.audio.enabled }),
         f: () => toggleFullscreen(),
+        h: () => !stageOnly && togglePresenter(),
       }
       if (map[k]) {
         e.preventDefault()
@@ -413,6 +444,8 @@ export default function App() {
     guestAnswered,
     setAudio,
     toggleFullscreen,
+    togglePresenter,
+    stageOnly,
     deadline,
     startClock,
   ])
@@ -434,10 +467,21 @@ export default function App() {
     state.phase !== 'ejecting'
   const ejectedNames = state.students.filter((s) => s.ejected).map(displayName)
 
+  const clock = {
+    running: deadline != null,
+    secondsLeft: timeLeft,
+    start: () => startClock(ANSWER_SECONDS),
+  }
+
   return (
     <div
       ref={appRef}
-      className={['app', reduced && 'app--reduced', stageOnly && 'app--stage']
+      className={[
+        'app',
+        reduced && 'app--reduced',
+        stageOnly && 'app--stage',
+        presenter && !stageOnly && 'app--presenter',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
@@ -485,6 +529,8 @@ export default function App() {
             challengerName={caught ? displayName(caught) : undefined}
             answererName={answerer ? displayName(answerer) : undefined}
             pickMode={pickMode}
+            students={state.students.filter((s) => !s.ejected)}
+            onPick={pickAnswerer}
             timeLeft={timeLeft}
             running={deadline != null}
             totalSeconds={ANSWER_SECONDS}
@@ -510,16 +556,20 @@ export default function App() {
         )}
       </main>
 
-      {!stageOnly && (
-        <TeacherPanel
+      {!stageOnly && !presenter && (
+        <TeacherPanel state={state} dispatch={dispatch} actions={actions} clock={clock} />
+      )}
+
+      {!stageOnly && presenter && (
+        <HostBar
           state={state}
-          dispatch={dispatch}
+          round={round}
+          mode={mode}
           actions={actions}
-          clock={{
-            running: deadline != null,
-            secondsLeft: timeLeft,
-            start: () => startClock(ANSWER_SECONDS),
-          }}
+          clock={clock}
+          onNext={() => dispatch({ type: 'round/goto', number: state.currentRound + 1 })}
+          onPrev={() => dispatch({ type: 'round/goto', number: state.currentRound - 1 })}
+          onExit={togglePresenter}
         />
       )}
     </div>

@@ -19,6 +19,25 @@ export default function TeacherPanel({ state, dispatch, actions, clock }) {
           <strong>NOODLES</strong>
           <em>{SESSION.title}</em>
         </span>
+        {/* The audience never needs this panel. One key hides it and lets the
+            street take the whole display; the second button is for a real
+            two-screen setup (control here, stage on the projector). */}
+        <span className="brand-actions">
+          <button
+            className="btn btn--ghost"
+            onClick={actions.togglePresenter}
+            title="Hide the controls — the street fills the screen. Press H to bring them back."
+          >
+            ▶ Present <kbd>H</kbd>
+          </button>
+          <button
+            className="btn btn--ghost"
+            onClick={actions.openProjector}
+            title="Open a host-free stage view in a new window for a second screen"
+          >
+            ↗ Projector
+          </button>
+        </span>
       </div>
 
       <nav className="tabs" role="tablist">

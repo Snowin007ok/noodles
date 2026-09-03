@@ -1,16 +1,18 @@
-import FeedFrame from './FeedFrame'
-import CrewMember from './CrewMember'
+import StreetScene from './StreetScene'
+import Townsfolk from './Townsfolk'
 import { feedLayout, castFor, SWIPE_OUT } from '../game/layout'
-import { CREW_COLORS } from '../game/constants'
+import { CREW_COLORS, ERAS } from '../game/constants'
 import { displayName } from '../game/state'
 
 const colorById = (id) => CREW_COLORS.find((c) => c.id === id) ?? CREW_COLORS[0]
 
 /**
- * The stage: the "For You" feed with every student as a profile card.
+ * The stage: the street, with the class standing on the pavement as
+ * townsfolk. Old world on the left, new world on the right, everyone
+ * together in the middle.
  *
- * `pickMode` turns the cards into real <button>s so the host can tap whoever
- * answered a volunteer question — keyboard and touch both work.
+ * `pickMode` turns the figures into real <button>s so the host can tap
+ * whoever answered a volunteer question — keyboard and touch both work.
  */
 export default function Lobby({
   students,
@@ -27,36 +29,39 @@ export default function Lobby({
   onPick,
   onLoadSample,
 }) {
-  // The feed shows a cast, not the whole roster — everyone still draws from
-  // the full pool. Whoever is lit, picked or answering is forced onto the
-  // feed so a selection is never invisible.
+  // The street shows a cast, not the whole roster — everyone still draws from
+  // the full pool. Whoever is lit, picked or answering is always brought on.
   const cast = castFor(students, displayCap, [spotlightId, caughtId, answeredById])
   const onlineCount = students.filter((s) => !s.ejected).length
-  const offFeed = onlineCount - cast.length
+  const offStage = onlineCount - cast.length
   const grid = feedLayout(cast.length)
 
-  /* The "gotcha" beat. When the algorithm locks in we need the picked card's
-     centre so the spotlight, shockwave and sparks all originate from it. */
+  /* The moment the algorithm locks in: the picked figure's spot, so the stage
+     light, shockwave and sparks all originate from where they stand. */
   const caughtIndex = cast.findIndex((s) => s.id === caughtId)
   const caughtSlot = phase === 'caught' && caughtIndex >= 0 ? grid.at(caughtIndex) : null
 
-  // Size the name type so the LONGEST name on the feed fits its card.
+  // Size the name plates so the LONGEST name on stage fits its slot.
   // Empirically (Fredoka, bold) a character is ~0.62em wide.
   const maxLen = Math.min(14, Math.max(6, ...cast.map((s) => displayName(s).length)))
-  const nameFs = Math.min((grid.card * 0.9) / (0.62 * maxLen), grid.card * 0.155)
+  const nameFs = Math.min((grid.card * 1.05) / (0.62 * maxLen), grid.card * 0.17)
 
   return (
     <div className="stage">
-      {/* .deck locks the 3:2 box the frame renders into, so card percentage
-          coordinates line up with the artwork at every size. */}
+      {/* .deck locks the 3:2 box the scene renders into, so figure percentage
+          coordinates line up with the pavement at every size. */}
       <div className={`deck${caughtSlot ? ' deck--punch' : ''}`}>
-        <FeedFrame
-          mode={mode}
-          alarm={alarm}
-          scrolling={phase === 'spinning'}
-          lost={phase === 'ejecting'}
-          online={onlineCount}
-        />
+        <StreetScene alarm={alarm} lost={phase === 'ejecting'} />
+
+        {/* Then → now ribbon along the top of the street. */}
+        <ol className="era-ribbon" aria-hidden="true">
+          {ERAS.map((era) => (
+            <li key={era.year}>
+              <b>{era.year}</b>
+              <span>{era.label}</span>
+            </li>
+          ))}
+        </ol>
 
         <div
           className={[
@@ -68,14 +73,11 @@ export default function Lobby({
             .filter(Boolean)
             .join(' ')}
           style={{
-            '--card-w': `${grid.card.toFixed(3)}cqw`,
+            '--folk-w': `${grid.card.toFixed(3)}cqw`,
             '--name-fs': `clamp(8px, ${nameFs.toFixed(3)}cqw, 24px)`,
           }}
         >
-          {/* ---------- the pick: spotlight, shockwave, sparks ----------
-              Three separate siblings rather than one wrapper: each needs its
-              own z-index so the rings sit behind the picked card while the
-              sparks fly in front of it. */}
+          {/* ---------- the pick: stage light, shockwave, sparks ---------- */}
           {caughtSlot && (
             <>
               <div
@@ -102,7 +104,7 @@ export default function Lobby({
             </>
           )}
 
-          {/* ---------- the cards ---------- */}
+          {/* ---------- the townsfolk ---------- */}
           {cast.map((student, i) => {
             const slot = grid.at(i)
             const isSpot = student.id === spotlightId && phase === 'spinning'
@@ -110,14 +112,17 @@ export default function Lobby({
             const isFlying = launching && student.id === caughtId
             const isAnswerer = student.id === answeredById
             const pos = isFlying ? SWIPE_OUT : slot
+            // Stable per-student silhouette: hash the id so re-sorting the
+            // roster never turns a grandma into a teenager.
+            const variant = [...student.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 8
 
             const cls = [
-              'pcard',
-              isSpot && 'pcard--spotlight',
-              isCaught && 'pcard--caught',
-              isFlying && 'pcard--flying',
-              isAnswerer && 'pcard--answerer',
-              student.participated && 'pcard--done',
+              'folk',
+              isSpot && 'folk--spotlight',
+              isCaught && 'folk--caught',
+              isFlying && 'folk--flying',
+              isAnswerer && 'folk--answerer',
+              student.participated && 'folk--done',
             ]
               .filter(Boolean)
               .join(' ')
@@ -139,42 +144,47 @@ export default function Lobby({
                 style={{
                   left: `${pos.x}%`,
                   top: `${pos.y}%`,
-                  // Deterministic per-index offsets so the idle float is not in lockstep.
                   '--bob-delay': `${(i % 7) * 0.31}s`,
                   '--bob-dur': `${3.4 + (i % 5) * 0.26}s`,
-                  zIndex: isCaught || isSpot ? 150 : isAnswerer ? 120 : 10,
+                  // Rows further down the pavement are nearer the viewer.
+                  zIndex: isCaught || isSpot ? 150 : isAnswerer ? 120 : 10 + Math.round(slot.y),
                 }}
                 {...interactive}
               >
-                <span className="pcard-avatar">
-                  <CrewMember color={colorById(student.colorId)} state={isSpot ? 'alert' : 'idle'} />
+                {(isCaught || isAnswerer) && (
+                  <span className={`folk-bubble${isCaught ? ' folk-bubble--pick' : ' folk-bubble--hand'}`}>
+                    {isCaught ? '!' : '✋'}
+                  </span>
+                )}
+                <span className="folk-art">
+                  <Townsfolk
+                    color={colorById(student.colorId)}
+                    variant={variant}
+                    state={isSpot ? 'alert' : 'idle'}
+                  />
                 </span>
-                {/* title as a safety net: a very long name still ellipsises on a
-                    big wall, and hovering must always recover it in full. */}
-                <span className="pcard-name" title={displayName(student)}>
+                {/* title as a safety net: a very long name still ellipsises in a
+                    big class, and hovering must always recover it in full. */}
+                <span className="folk-name" title={displayName(student)}>
                   {displayName(student)}
                 </span>
-                <span className="pcard-meta">
-                  {isCaught ? 'picked' : isAnswerer ? 'answering' : student.participated ? '✓ took part' : 'online'}
-                </span>
-                {isCaught && <span className="pcard-badge">1</span>}
               </Tag>
             )
           })}
         </div>
 
-        {/* Be honest that the feed is a cast, not the whole class — otherwise
-            "why isn't my student in there?" looks like a bug. */}
-        {offFeed > 0 && (
-          <span className="off-deck" title={`${offFeed} more students are in the pool but not on the feed`}>
-            +{offFeed} more in pool
+        {/* Be honest that the street shows a cast, not the whole class —
+            otherwise "why isn't my student in there?" looks like a bug. */}
+        {offStage > 0 && (
+          <span className="off-deck" title={`${offStage} more students are in the pool but not on the street`}>
+            +{offStage} more in pool
           </span>
         )}
       </div>
 
       {students.length === 0 && (
         <div className="stage-empty">
-          <strong>Nobody on the feed</strong>
+          <strong>The street is empty</strong>
           <span>
             Add students in the <b>Roster</b> tab, or paste your whole class list
             at once.
@@ -187,10 +197,10 @@ export default function Lobby({
 
       {students.length > 0 && students.every((s) => s.ejected) && (
         <div className="stage-empty stage-empty--out">
-          <strong>Everyone is logged out</strong>
+          <strong>Everyone has logged out</strong>
           <span>
             Every student has been logged out. Use <b>Reset progress</b> to bring
-            them all back online.
+            them all back.
           </span>
         </div>
       )}

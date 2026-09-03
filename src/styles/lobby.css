@@ -1,5 +1,5 @@
 /* ==========================================================
-   NOODLES — the feed stage
+   NOODLES — the street stage
    ========================================================== */
 
 .stage-wrap {
@@ -21,7 +21,7 @@
   padding: var(--s3) clamp(16px, 1.8vw, 30px);
   border: var(--bw) solid var(--ink);
   border-radius: var(--r-lg);
-  background: var(--panel);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
   box-shadow:
     0 var(--drop) 0 var(--ink),
     inset 0 2px 0 rgba(255, 255, 255, 0.07);
@@ -61,24 +61,24 @@
 }
 
 .hud-mode--students {
-  background: rgba(79, 195, 232, 0.16);
-  color: var(--cyan);
+  background: rgba(42, 179, 166, 0.18);
+  color: #8fe3da;
 }
 
 .hud-mode--guest {
-  background: rgba(72, 225, 123, 0.16);
-  color: var(--green);
+  background: rgba(123, 182, 97, 0.18);
+  color: #bfe3ac;
 }
 
 .hud-mode--volunteer {
-  background: rgba(255, 210, 61, 0.16);
+  background: rgba(242, 177, 52, 0.18);
   color: var(--amber);
   animation: openPulse 2.2s ease-in-out infinite;
 }
 
 @keyframes openPulse {
   50% {
-    background: rgba(255, 210, 61, 0.32);
+    background: rgba(242, 177, 52, 0.34);
   }
 }
 
@@ -92,568 +92,350 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r-lg);
-  /* Own stacking context: keeps card z-indexes contained so the banner and
-     question card can sit above the whole feed. */
+  /* Own stacking context: keeps figure z-indexes contained so the banner and
+     question card can sit above the whole street. */
   z-index: 0;
   /* Size container so .deck can size itself against BOTH stage axes below. */
   container-type: size;
 }
 
-/* The deck MUST stay exactly 3:2: cards map percentage positions onto this
-   box and the frame fills it. Sizing the width against both stage axes keeps
-   the ratio exact — 150cqh is 1.5x the stage height, i.e. the widest a 3:2
-   box can be and still fit vertically. */
+/* The deck fills the whole stage — every pixel the audience can see is
+   street. The scene is drawn 3:2 but is anchored to the pavement and scaled
+   to COVER the box (see StreetScene's preserveAspectRatio), so on a wider or
+   taller display the sky crops rather than the picture stretching, and the
+   ground stays exactly where the figures' feet are. Figure positions are
+   percentages of this box. */
 .deck {
   position: relative;
-  aspect-ratio: 1200 / 800;
-  width: min(100cqw, 150cqh);
-  height: auto;
-  flex: 0 0 auto;
-  /* Clips the logged-out card as it is swiped off the feed. */
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  /* Clips the logged-out figure as they walk off the street. */
   overflow: hidden;
   border-radius: var(--r-lg);
+  border: 4px solid var(--ink);
+  box-shadow: 0 8px 0 var(--ink), 0 24px 60px rgba(0, 0, 0, 0.45);
+  /* Ribbon and badges size themselves against the deck. */
+  container-type: inline-size;
 }
 
-/* ==========================================================
-   The device frame
-   ========================================================== */
+/* ================= the scene ================= */
 
-.feed {
+.street {
   position: absolute;
   inset: 0;
-  container-type: inline-size;
-  border: 4px solid var(--ink);
-  border-radius: var(--r-lg);
-  background:
-    radial-gradient(90% 60% at 50% 0%, rgba(79, 195, 232, 0.08), transparent 70%),
-    linear-gradient(180deg, #171c25 0%, #10141b 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  overflow: hidden;
-  transition: box-shadow 200ms ease;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.feed--alarm {
-  animation: feedAlarm 0.7s ease-in-out infinite;
+.street-alarm {
+  opacity: 0;
+  transition: opacity 200ms ease;
 }
 
-@keyframes feedAlarm {
-  0%, 100% { box-shadow: inset 0 0 0 4px rgba(215, 30, 34, 0.25), inset 0 0 60px rgba(215, 30, 34, 0.15); }
-  50% { box-shadow: inset 0 0 0 6px rgba(215, 30, 34, 0.7), inset 0 0 120px rgba(215, 30, 34, 0.35); }
+.street--alarm .street-alarm {
+  animation: alarmWash 0.75s ease-in-out infinite;
 }
 
-/* ---- status bar ---- */
+@keyframes alarmWash {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
 
-.feed-status {
+.street--lost {
+  filter: saturate(0.35) contrast(1.05);
+  transition: filter 300ms ease;
+}
+
+.drone {
+  animation: hover 3s ease-in-out infinite;
+}
+
+@keyframes hover {
+  50% { transform: translate(1030px, 122px); }
+}
+
+.signal-arcs path {
+  animation: arcPulse 2.4s ease-in-out infinite;
+}
+
+.signal-arcs path:nth-child(2) { animation-delay: 0.3s; }
+.signal-arcs path:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes arcPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.8; }
+}
+
+/* ---- then → now ribbon ---- */
+
+.era-ribbon {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 7.5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2cqw;
-  padding: 0 2.2cqw;
-  background: rgba(0, 0, 0, 0.32);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(8px, 1.25cqw, 18px);
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
-.feed-status-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5cqw;
-  color: #fff;
-  letter-spacing: 0.16em;
-}
-
-.feed-status-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: center;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.feed-status-title i {
-  font-style: normal;
-  font-weight: 600;
-  color: var(--text-dim);
-  text-transform: none;
-  letter-spacing: 0.02em;
-}
-
-.feed-status-sys {
-  display: inline-flex;
-  align-items: center;
-  gap: 1.1cqw;
-  color: #fff;
-  white-space: nowrap;
-}
-
-.feed-online {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5cqw;
-  color: var(--green);
-  font-size: 0.85em;
-  text-transform: uppercase;
-}
-
-.feed-online-dot {
-  width: 0.7cqw;
-  height: 0.7cqw;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0.6cqw rgba(72, 225, 123, 0.8);
-}
-
-.feed-signal {
-  color: #fff;
-}
-
-.feed--lost .feed-signal {
-  color: var(--red);
-}
-
-/* ---- tabs ---- */
-
-.feed-tabs {
-  position: absolute;
-  top: 7.5%;
-  left: 0;
-  right: 0;
-  height: 8%;
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  padding: 0 2.2cqw;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(8px, 1.35cqw, 19px);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.feed-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5cqw;
-  padding: 0 1.6cqw;
-  color: var(--text-faint);
-  border-bottom: 0.35cqw solid transparent;
-  transition: color 200ms ease, border-color 200ms ease;
-}
-
-.feed-tab--on {
-  color: #fff;
-  border-bottom-color: var(--cyan);
-}
-
-.feed-tab-icon {
-  width: 1.1em;
-  height: 1.1em;
-}
-
-.feed-tabs-mode {
-  margin-left: auto;
-  align-self: center;
-  padding: 0.3cqw 1.2cqw;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  color: var(--text-dim);
-  font-size: 0.8em;
-}
-
-/* ---- feed body ---- */
-
-.feed-body {
-  position: absolute;
-  top: 15.5%;
-  left: 0;
-  right: 0;
-  bottom: 12.5%;
-  background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0,
-      transparent calc(6cqw - 1px),
-      rgba(255, 255, 255, 0.025) calc(6cqw - 1px),
-      rgba(255, 255, 255, 0.025) 6cqw
-    );
-}
-
-.feed-scrollbar {
-  position: absolute;
-  top: 1.5%;
-  bottom: 1.5%;
-  right: 0.6cqw;
-  width: 0.55cqw;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.feed-scrollbar-thumb {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 22%;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.feed--scrolling .feed-scrollbar-thumb {
-  animation: thumbScroll 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes thumbScroll {
-  0% { top: 0; }
-  100% { top: 78%; }
-}
-
-/* ---- era dock ---- */
-
-.feed-dock {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 12.5%;
-  display: flex;
-  align-items: center;
-  gap: 1.5cqw;
-  padding: 0 2.2cqw;
-  background: rgba(0, 0, 0, 0.36);
-  border-top: 2px solid rgba(0, 0, 0, 0.5);
-}
-
-.feed-dock-label {
-  flex: 0 0 auto;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(8px, 1.2cqw, 16px);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--amber);
-  padding-right: 1.5cqw;
-  border-right: 2px solid rgba(255, 255, 255, 0.08);
-}
-
-.eras {
-  flex: 1 1 auto;
+  top: 1.6%;
+  left: 1.6%;
+  right: 1.6%;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 1cqw;
+  gap: 0.6cqw;
   margin: 0;
   padding: 0;
   list-style: none;
-  position: relative;
+  pointer-events: none;
+  z-index: 5;
 }
 
-/* the timeline rail running behind the eras */
-.eras::before {
-  content: '';
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 30%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--text-faint), var(--cyan));
-  opacity: 0.45;
-}
-
-.era {
-  position: relative;
+.era-ribbon li {
   display: grid;
+  gap: 0.1cqw;
   justify-items: center;
-  gap: 0.15cqw;
-  color: var(--text-dim);
-  font-family: var(--font-display);
   text-align: center;
-}
-
-.era-icon {
-  width: 2.6cqw;
-  height: 2.6cqw;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--panel-2);
+  padding: 0.45cqw 0.6cqw;
   border: 2px solid var(--ink);
-  color: var(--text);
+  border-radius: 0.8cqw;
+  background: rgba(255, 246, 232, 0.86);
+  color: var(--ink);
+  font-family: var(--font-display);
   box-shadow: 0 2px 0 var(--ink);
 }
 
-.era-icon svg {
-  width: 62%;
-  height: 62%;
-}
-
-.era:last-child .era-icon {
-  color: var(--cyan);
-  border-color: rgba(79, 195, 232, 0.5);
-}
-
-.era-year {
-  font-size: clamp(7px, 1cqw, 13px);
+.era-ribbon b {
+  font-size: clamp(7px, 1.15cqw, 15px);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #fff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red-deep);
 }
 
-.era-label {
-  font-size: clamp(6px, 0.85cqw, 11px);
+.era-ribbon li:last-child b {
+  color: var(--cyan-deep);
+}
+
+.era-ribbon span {
+  font-size: clamp(6px, 0.9cqw, 12px);
   font-weight: 600;
-  color: var(--text-faint);
+  line-height: 1.15;
+  color: #5a463f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
 
-/* ---- signal lost wash (logout) ---- */
-
-.feed-lost-wash {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  opacity: 0;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(215, 30, 34, 0.08) 0 2px,
-    transparent 2px 5px
-  );
-  transition: opacity 220ms ease;
-}
-
-.feed-lost-wash span {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(14px, 3.4cqw, 48px);
-  letter-spacing: 0.3em;
-  color: var(--red);
-  text-shadow: 0 3px 0 var(--ink);
-  opacity: 0.55;
-}
-
-.feed--lost .feed-lost-wash {
-  opacity: 1;
-  animation: lostFlicker 0.35s steps(2, end) infinite;
-}
-
-@keyframes lostFlicker {
-  50% { opacity: 0.6; }
-}
-
 /* ==========================================================
-   The cards
+   The townsfolk
    ========================================================== */
 
-/* The container lives on this inner wrapper rather than on .deck itself:
-   inline-size containment would stop .deck's `width: auto` from deriving off
-   its aspect-ratio. Lobby sets --card-w and --name-fs inline. */
+/* The container lives on this inner wrapper; Lobby sets --folk-w and
+   --name-fs inline for the current cast size. */
 .deck-layers {
   position: absolute;
   inset: 0;
   container-type: inline-size;
   pointer-events: none;
-  --card-w: 16cqw;
-  --name-fs: clamp(8px, 1.6cqw, 22px);
+  --folk-w: 9cqw;
+  --name-fs: clamp(8px, 1.5cqw, 22px);
 }
 
+/* While the algorithm scrolls, the whole crowd shifts a touch — restless. */
 .deck-layers--scrolling {
-  animation: feedScroll 0.72s ease-in-out infinite;
+  animation: crowdShift 0.72s ease-in-out infinite;
 }
 
-@keyframes feedScroll {
-  0%, 100% { transform: translateY(-0.5%); }
-  50% { transform: translateY(0.5%); }
+@keyframes crowdShift {
+  0%, 100% { transform: translateX(-0.35%); }
+  50% { transform: translateX(0.35%); }
 }
 
-.pcard {
+.folk {
   position: absolute;
-  width: var(--card-w);
-  transform: translate(-50%, -50%);
+  width: var(--folk-w);
+  /* Anchored by the FEET: the slot marks where they stand on the pavement,
+     the figure rises above it and the name plate hangs just below. */
+  --anchor: -86%;
+  transform: translate(-50%, var(--anchor));
   display: grid;
   justify-items: center;
-  gap: calc(var(--card-w) * 0.025);
-  padding: calc(var(--card-w) * 0.07) calc(var(--card-w) * 0.06) calc(var(--card-w) * 0.08);
-  border: max(2px, calc(var(--card-w) * 0.018)) solid var(--ink);
-  border-radius: calc(var(--card-w) * 0.13);
-  background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: none;
   color: inherit;
   font: inherit;
-  box-shadow:
-    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
-    0 10px 24px rgba(0, 0, 0, 0.35);
   transition:
     left 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
     top 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
     transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    opacity 300ms ease;
+    opacity 300ms ease,
+    filter 300ms ease;
   will-change: transform, left, top;
 }
 
-.deck-layers--picking .pcard {
+.deck-layers--picking .folk {
   pointer-events: auto;
   cursor: pointer;
 }
 
-.deck-layers--picking .pcard:hover,
-.deck-layers--picking .pcard:focus-visible {
-  transform: translate(-50%, -50%) scale(1.08);
-  border-color: var(--amber);
+.deck-layers--picking .folk:hover,
+.deck-layers--picking .folk:focus-visible {
+  transform: translate(-50%, var(--anchor)) scale(1.1);
 }
 
-.pcard-avatar {
+.deck-layers--picking .folk:hover .folk-name,
+.deck-layers--picking .folk:focus-visible .folk-name {
+  opacity: 1;
+  background: var(--amber);
+}
+
+.folk-art {
   display: block;
-  animation: bob var(--bob-dur, 3.4s) ease-in-out var(--bob-delay, 0s) infinite;
+  animation: sway var(--bob-dur, 3.4s) ease-in-out var(--bob-delay, 0s) infinite;
+  transform-origin: 50% 100%;
 }
 
-@keyframes bob {
-  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
-  50% { transform: translateY(-4%) rotate(1.2deg); }
+@keyframes sway {
+  0%, 100% { transform: rotate(-1.3deg); }
+  50% { transform: rotate(1.3deg) translateY(-1.5%); }
 }
 
-.pcard-avatar .crew-svg {
-  width: calc(var(--card-w) * 0.6);
+.folk-svg {
+  width: var(--folk-w);
   height: auto;
   display: block;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 3px 4px rgba(40, 20, 10, 0.35));
 }
 
-.crew-bead {
-  animation: beadGlow 2.6s ease-in-out infinite;
-}
-
-@keyframes beadGlow {
-  50% { filter: drop-shadow(0 0 6px #ffe27a); }
-}
-
-.pcard-name {
-  max-width: 100%;
+/* name plate — cream card hung under the figure */
+.folk-name {
+  margin-top: calc(var(--folk-w) * -0.06);
+  max-width: calc(var(--folk-w) * 1.35);
+  padding: 0.12em 0.55em;
+  border: max(1.5px, calc(var(--folk-w) * 0.02)) solid var(--ink);
+  border-radius: 0.5em;
+  background: #fff6e8;
+  color: var(--ink);
   font-family: var(--font-display);
   font-size: var(--name-fs);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   letter-spacing: 0.02em;
-  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 0 var(--ink);
+  opacity: 0;
+  transition: opacity 200ms ease, background 200ms ease;
 }
 
-.pcard-meta {
-  font-family: var(--font-display);
-  font-size: calc(var(--name-fs) * 0.62);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--green);
-  white-space: nowrap;
+/* Names on: host toggle, or picking a volunteer — plus whoever matters now. */
+.deck-layers--names .folk-name,
+.folk--spotlight .folk-name,
+.folk--caught .folk-name,
+.folk--answerer .folk-name {
+  opacity: 1;
 }
 
-/* Names off: only the cards that matter right now keep theirs. */
-.deck-layers:not(.deck-layers--names)
-  .pcard:not(.pcard--spotlight):not(.pcard--caught):not(.pcard--answerer)
-  .pcard-name {
-  display: none;
-}
-
-.pcard-badge {
+/* speech bubble over the head — "!" for the pick, a hand for the volunteer */
+.folk-bubble {
   position: absolute;
-  top: calc(var(--card-w) * -0.07);
-  right: calc(var(--card-w) * -0.07);
-  min-width: calc(var(--card-w) * 0.22);
-  height: calc(var(--card-w) * 0.22);
-  padding: 0 calc(var(--card-w) * 0.05);
+  top: calc(var(--folk-w) * -0.34);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: calc(var(--folk-w) * 0.42);
+  height: calc(var(--folk-w) * 0.42);
+  padding: 0 calc(var(--folk-w) * 0.1);
   display: grid;
   place-items: center;
+  border: max(2px, calc(var(--folk-w) * 0.025)) solid var(--ink);
   border-radius: 999px;
-  background: var(--red);
-  color: #fff;
-  border: max(2px, calc(var(--card-w) * 0.015)) solid var(--ink);
+  background: #fff6e8;
+  color: var(--ink);
   font-family: var(--font-display);
-  font-size: calc(var(--card-w) * 0.12);
+  font-size: calc(var(--folk-w) * 0.26);
   font-weight: 700;
-  box-shadow: 0 2px 0 var(--ink);
-  animation: badgePop 480ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  line-height: 1;
+  box-shadow: 0 3px 0 var(--ink);
+  animation: bubblePop 480ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  z-index: 2;
 }
 
-@keyframes badgePop {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
+.folk-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--folk-w) * -0.11);
+  width: calc(var(--folk-w) * 0.16);
+  height: calc(var(--folk-w) * 0.16);
+  transform: translateX(-50%) rotate(45deg);
+  background: inherit;
+  border-right: inherit;
+  border-bottom: inherit;
+}
+
+.folk-bubble--pick {
+  background: var(--red);
+  color: #fff;
+}
+
+.folk-bubble--hand {
+  background: var(--amber);
+}
+
+@keyframes bubblePop {
+  0% { transform: translateX(-50%) scale(0); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 /* ---- already had a turn ---- */
 
-.pcard--done {
-  opacity: 0.62;
+.folk--done {
+  opacity: 0.7;
 }
 
-.pcard--done .crew-svg {
-  filter: saturate(0.3) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+.folk--done .folk-svg {
+  filter: saturate(0.35) drop-shadow(0 3px 4px rgba(40, 20, 10, 0.35));
 }
 
-.pcard--done .pcard-meta {
-  color: var(--text-dim);
-}
+/* ---- the algorithm passing over ---- */
 
-/* ---- the algorithm scrolling past ---- */
-
-.pcard--spotlight {
-  transform: translate(-50%, -50%) scale(1.14);
-  border-color: var(--cyan);
-  box-shadow:
-    0 0 0 max(3px, calc(var(--card-w) * 0.025)) rgba(79, 195, 232, 0.55),
-    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
-    0 0 40px rgba(79, 195, 232, 0.5);
+.folk--spotlight {
+  transform: translate(-50%, var(--anchor)) scale(1.14);
   opacity: 1;
   transition-duration: 0ms;
 }
 
-.pcard--spotlight .pcard-meta {
-  color: var(--cyan);
+.folk--spotlight .folk-svg {
+  filter: drop-shadow(0 0 14px var(--cyan)) drop-shadow(0 3px 4px rgba(40, 20, 10, 0.35));
+}
+
+.folk--spotlight .folk-name {
+  background: #c9f3ee;
 }
 
 /* ---- volunteer answering ---- */
 
-.pcard--answerer {
-  transform: translate(-50%, -50%) scale(1.16);
-  border-color: var(--amber);
-  box-shadow:
-    0 0 0 max(3px, calc(var(--card-w) * 0.025)) rgba(255, 210, 61, 0.5),
-    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
-    0 0 36px rgba(255, 210, 61, 0.45);
+.folk--answerer {
+  transform: translate(-50%, var(--anchor)) scale(1.16);
   opacity: 1;
 }
 
-.pcard--answerer .pcard-meta {
-  color: var(--amber);
+.folk--answerer .folk-svg {
+  filter: drop-shadow(0 0 14px var(--amber)) drop-shadow(0 3px 4px rgba(40, 20, 10, 0.35));
+}
+
+.folk--answerer .folk-name {
+  background: var(--amber);
 }
 
 /* ==========================================================
    THE PICK — the moment the algorithm locks in.
 
    Beat order, all firing together:
-     1. camera punches in and shakes            (.deck--punch)
-     2. the feed drops into shadow, one card lit (.fx-spot)
-     3. two shockwave rings burst outward        (.fx-burst)
-     4. sparks fly                               (.fx-sparks)
-     5. the card pops with a red notification badge (.pcard--caught)
+     1. camera punches in and shakes               (.deck--punch)
+     2. the street drops into shadow, one figure lit (.fx-spot)
+     3. two shockwave rings burst outward           (.fx-burst)
+     4. sparks fly                                  (.fx-sparks)
+     5. the figure jumps, with a "!" bubble          (.folk--caught)
    ========================================================== */
 
 .deck--punch {
@@ -670,19 +452,19 @@
   100% { transform: scale(1) translate(0, 0); }
 }
 
-/* Sits above ordinary cards (z 10) but below the picked card (150). */
+/* Sits above ordinary figures (z ≤ 110) but below the picked one (150). */
 .fx-spot {
   position: absolute;
   inset: 0;
-  z-index: 100;
+  z-index: 112;
   pointer-events: none;
   background: radial-gradient(
     circle at var(--fx-x) var(--fx-y),
-    rgba(255, 214, 92, 0.22) 0,
-    rgba(255, 160, 60, 0.08) 6cqw,
-    rgba(4, 6, 14, 0.6) 15cqw,
-    rgba(3, 4, 11, 0.9) 36cqw,
-    rgba(2, 3, 8, 0.95) 100%
+    rgba(255, 226, 150, 0.28) 0,
+    rgba(255, 180, 80, 0.1) 6cqw,
+    rgba(40, 22, 14, 0.55) 15cqw,
+    rgba(30, 16, 10, 0.86) 36cqw,
+    rgba(24, 12, 8, 0.92) 100%
   );
   animation: spotIn 460ms ease-out both;
 }
@@ -694,7 +476,7 @@
 
 .fx-burst {
   position: absolute;
-  z-index: 110;
+  z-index: 114;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -710,8 +492,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(255, 224, 130, 0.5) 0%,
-    rgba(255, 130, 60, 0.22) 38%,
+    rgba(255, 228, 150, 0.55) 0%,
+    rgba(239, 139, 59, 0.22) 38%,
     transparent 70%
   );
   animation: glowPulse 900ms ease-out both;
@@ -764,7 +546,7 @@
   margin: -0.42cqw 0 0 -0.42cqw;
   border-radius: 999px;
   background: var(--amber);
-  box-shadow: 0 0 0.8cqw rgba(255, 210, 61, 0.9);
+  box-shadow: 0 0 0.8cqw rgba(242, 177, 52, 0.9);
   animation: sparkOut 720ms cubic-bezier(0.12, 0.8, 0.3, 1) both;
   animation-delay: var(--sd, 0s);
 }
@@ -783,68 +565,74 @@
   100% { transform: rotate(var(--a)) translateX(var(--d)) scale(0); opacity: 0; }
 }
 
-.pcard--caught {
-  transform: translate(-50%, -50%) scale(1.4);
-  border-color: var(--red);
-  box-shadow:
-    0 0 0 max(3px, calc(var(--card-w) * 0.03)) rgba(215, 30, 34, 0.55),
-    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
-    0 0 50px rgba(215, 30, 34, 0.55);
+.folk--caught {
+  transform: translate(-50%, var(--anchor)) scale(1.42);
   opacity: 1;
 }
 
-.pcard--caught .pcard-avatar {
-  animation: caughtPop 820ms cubic-bezier(0.2, 1.5, 0.35, 1) both;
+.folk--caught .folk-art {
+  animation: caughtJump 820ms cubic-bezier(0.2, 1.5, 0.35, 1) both;
   transform-origin: 50% 100%;
 }
 
-@keyframes caughtPop {
+@keyframes caughtJump {
   0% { transform: translateY(0) scale(1, 1); }
-  14% { transform: translateY(0) scale(1.32, 0.7); }
-  34% { transform: translateY(-22%) scale(0.82, 1.3) rotate(-7deg); }
-  52% { transform: translateY(-9%) scale(1.12, 0.92) rotate(6deg); }
-  68% { transform: translateY(-14%) scale(0.97, 1.05) rotate(-3deg); }
-  84% { transform: translateY(-10%) scale(1.02, 0.99) rotate(1.5deg); }
-  100% { transform: translateY(-11%) scale(1, 1) rotate(0); }
+  14% { transform: translateY(0) scale(1.22, 0.78); }
+  34% { transform: translateY(-26%) scale(0.9, 1.18) rotate(-6deg); }
+  52% { transform: translateY(-8%) scale(1.08, 0.94) rotate(5deg); }
+  68% { transform: translateY(-14%) scale(0.98, 1.04) rotate(-3deg); }
+  84% { transform: translateY(-9%) scale(1.02, 0.99) rotate(1.5deg); }
+  100% { transform: translateY(-10%) scale(1, 1) rotate(0); }
 }
 
-.pcard--caught .pcard-meta {
-  color: var(--red);
+.folk--caught .folk-svg {
+  filter: drop-shadow(0 0 18px var(--red)) drop-shadow(0 3px 4px rgba(40, 20, 10, 0.35));
 }
 
-/* ---- logged out: swiped off the feed ---- */
+.folk--caught .folk-name {
+  background: var(--red);
+  color: #fff;
+}
 
-.pcard--flying {
+/* ---- logged out: walks off the right edge of the street ---- */
+
+.folk--flying {
   transition:
     left 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
     top 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
     transform 1150ms ease-in,
-    opacity 1150ms ease-in;
-  transform: translate(-50%, -50%) scale(0.55) rotate(22deg);
-  opacity: 0.4;
+    opacity 1150ms ease-in,
+    filter 600ms ease;
+  transform: translate(-50%, var(--anchor)) scale(0.9) rotate(6deg);
+  opacity: 0.35;
   filter: grayscale(1);
 }
 
-.pcard--flying .pcard-avatar {
-  animation: none;
+.folk--flying .folk-art {
+  animation: hurry 0.28s linear infinite;
 }
 
-/* ---------------- empty state ---------------- */
+@keyframes hurry {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
 
-/* "+N more in pool" — sits in the deck's bottom-right corner. */
+/* ---------------- badges & empty state ---------------- */
+
+/* "+N more in pool" — bottom-right of the street. */
 .off-deck {
   position: absolute;
-  right: 14px;
-  bottom: 13.5%;
+  right: 1.2cqw;
+  bottom: 1.2cqw;
   z-index: 60;
   padding: 5px 12px;
   border: 2.5px solid var(--ink);
   border-radius: 999px;
-  background: rgba(10, 14, 28, 0.9);
-  color: var(--text-dim);
+  background: rgba(255, 246, 232, 0.92);
+  color: var(--ink);
   font-family: var(--font-display);
   font-size: clamp(9px, 1.05cqw, 14px);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   white-space: nowrap;
   pointer-events: none;
@@ -865,7 +653,7 @@
   padding: var(--s6) var(--s5);
   border: 4px dashed var(--line);
   border-radius: var(--r-xl);
-  background: rgba(9, 12, 24, 0.96);
+  background: rgba(30, 22, 20, 0.96);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
@@ -894,7 +682,7 @@
 }
 
 .stage-empty--out {
-  border-color: rgba(255, 77, 99, 0.55);
+  border-color: rgba(217, 86, 58, 0.55);
 }
 
 .stage-empty--out strong {
@@ -904,7 +692,7 @@
 /* ---------------- narrow / portrait ---------------- */
 
 @media (max-width: 1000px) {
-  .app {
+  .app:not(.app--presenter):not(.app--stage) {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1fr) minmax(240px, 42vh);
     overflow: auto;

@@ -39,9 +39,9 @@ export const MODE_LABEL = {
 
 /** Copy the room reads on the feed, per mode. */
 export const MODE_COPY = {
-  students: { hud: 'FOR YOU — THE ALGORITHM PICKS', card: 'Student question' },
-  guest: { hud: 'VERIFIED GUEST — OVER TO OUR GUEST', card: 'Guest question' },
-  volunteer: { hud: 'RAISE YOUR HAND — ANYONE MAY ANSWER', card: 'Volunteer question' },
+  students: { hud: 'STUDENTS — THE ALGORITHM PICKS ONE', card: 'Student question' },
+  guest: { hud: 'GUEST — OVER TO OUR SPEAKER', card: 'Guest question' },
+  volunteer: { hud: 'VOLUNTEER — RAISE YOUR HAND', card: 'Volunteer question' },
 }
 
 /** How long a selected student has to answer before they are logged out. */
@@ -108,12 +108,13 @@ export const EJECT_REDUCED = {
  * The era dock under the feed — the generational arc both talks trace,
  * from scheduled and physical to instant and always-on.
  * ------------------------------------------------------------------ */
+/* Half life, half tech — the talk's own balance. */
 export const ERAS = [
-  { year: '1990s', label: 'Newspaper & letters', icon: 'paper' },
-  { year: '2000s', label: 'Landline & SMS', icon: 'phone' },
-  { year: '2010s', label: 'Smartphone & social', icon: 'mobile' },
-  { year: '2020s', label: 'Short-form & always-on', icon: 'reel' },
-  { year: 'Next', label: 'AI-shaped everything', icon: 'ai' },
+  { year: 'Then', label: 'Letters, landlines & neighbours', icon: 'letter' },
+  { year: '90s', label: 'Radio & TV evenings, street games', icon: 'radio' },
+  { year: '00s', label: 'SMS, cyber cafés, first phones', icon: 'phone' },
+  { year: '10s', label: 'Smartphones, social & selfies', icon: 'mobile' },
+  { year: 'Now', label: 'Always-on, short-form & AI', icon: 'ai' },
 ]
 
 /* ------------------------------------------------------------------ *

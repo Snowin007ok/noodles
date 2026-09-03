@@ -24,12 +24,16 @@ away.
 
 NOODLES turns "who answers the next question?" into a game built on the
 session's own topic — *From Scroll to Soul: How Digital Evolution Shaped
-Generations*. The class appears as profile cards on a giant "For You" feed;
-the algorithm doom-scrolls the room and stops on someone ("THE ALGORITHM
-CHOSE"), the question takes over the screen, and a hard 2-minute clock decides
-whether they answered or get logged out — permanently, for the rest of the
-session. An era dock under the feed traces the generational arc from
-newspapers and letters to always-on and AI.
+Generations*. The class stands as townsfolk of every age on a warm, hand-drawn
+street whose left half is the older world (post office and letterbox, radio &
+TV shop, telephone booth, newspaper stand, a tree with a swing) and whose
+right half is the new one (café full of laptops, phone billboard, glass
+offices, a signal tower) — the sky itself grades from a nostalgic sunset into
+a clear morning. The algorithm scrolls the crowd and stops on someone ("THE
+ALGORITHM CHOSE"), the question takes over the whole screen, and a hard
+2-minute clock decides whether they answered or get logged out — permanently,
+for the rest of the session. A then→now ribbon gives life and technology
+equal weight (user-confirmed: 50/50, "it's life too").
 
 Success (user-confirmed): one specific upcoming event runs flawlessly —
 projector-legible, every button works live in front of the room, the drama
@@ -45,6 +49,12 @@ repeats until everyone has been drawn, verified by simulation) and stakes
 ## Operating Context
 
 - Run fullscreen in a browser on the host's laptop, mirrored to a projector.
+  The audience must never see the roster or controls (user-confirmed):
+  **Presenter mode** (`H`) folds the panel away so the street fills the entire
+  display, with a slim host bar for the round's actions; **Projector** opens a
+  host-free `?view=stage` window for two-screen setups. Every question type
+  takes over the full screen once revealed — volunteer rounds show the class
+  as name chips the host taps, so nothing depends on the street being visible.
 - Sessions are 10 rounds. Each question has an audience, editable in the
   Questions tab: **students** (the algorithm picks one), **guest** (for the
   invited guest speaker — no pick; a "no guest? algorithm picks" fallback), or

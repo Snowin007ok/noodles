@@ -10,40 +10,41 @@
 
 :root {
   /* ==========================================================
-     FLAT INDUSTRIAL — desaturated slate ship interior, thick
-     outlines, flat cel fills. The environment stays grey so the
-     colorful crew are the loudest thing on screen.
+     WARM CLASSIC — a hand-painted town at golden hour. Espresso
+     ink, cream paper, terracotta, gold and teal. Nothing neon,
+     nothing techy: the street carries the colour, the UI is the
+     warm wood and paper around it.
      ========================================================== */
 
   /* ---- surface ---- */
-  --ink: #11151c;
-  --hull: #39424e;
-  --panel: #1b2027;
-  --panel-2: #262d36;
-  --panel-3: #333b46;
-  --line: #3f4854;
-  --line-soft: #333a44;
+  --ink: #2a211e;
+  --hull: #4a3a34;
+  --panel: #2f2623;
+  --panel-2: #3d312c;
+  --panel-3: #4d3e37;
+  --line: #5e4c44;
+  --line-soft: #4a3b35;
 
   /* ---- text ---- */
-  --text: #ffffff;
-  --text-dim: #a7b1bc;
-  --text-faint: #6e7883;
+  --text: #fff6e8;
+  --text-dim: #d3c2b1;
+  --text-faint: #94806f;
 
-  /* ---- accents (fire-engine red is the signature) ---- */
-  --red: #d71e22;
-  --red-deep: #8f1114;
-  --cyan: #4fc3e8;
-  --cyan-deep: #1f7fa8;
-  --amber: #ffd23d;
-  --amber-deep: #c99a10;
-  --green: #48e17b;
-  --green-deep: #1f9e4d;
-  --orange: #ff8d1a;
-  --orange-deep: #c96206;
-  --violet: #a86be0;
+  /* ---- accents (terracotta is the signature) ---- */
+  --red: #d9563a;
+  --red-deep: #9c3a24;
+  --cyan: #2ab3a6;
+  --cyan-deep: #177f77;
+  --amber: #f2b134;
+  --amber-deep: #b97d12;
+  --green: #7bb661;
+  --green-deep: #4f8a3d;
+  --orange: #ef8b3b;
+  --orange-deep: #b85d16;
+  --violet: #9a6fb5;
   /* legacy aliases so nothing dangles; both resolve into the new scheme */
-  --magenta: #d71e22;
-  --magenta-deep: #8f1114;
+  --magenta: #d9563a;
+  --magenta-deep: #9c3a24;
 
   /* ---- spacing scale (4px base) ---- */
   --s1: 4px;
@@ -89,11 +90,10 @@ body {
   font-family: var(--font-body);
   font-weight: 600;
   color: var(--text);
-  /* Deep space: flat near-black with the faintest cold wash — the room and
-     crew carry all the colour. */
+  /* Warm dark wood around the picture — the street carries the colour. */
   background:
-    radial-gradient(1200px 800px at 50% -20%, rgba(64, 80, 100, 0.14) 0%, transparent 60%),
-    #0a0c10;
+    radial-gradient(1200px 800px at 50% -20%, rgba(242, 177, 52, 0.12) 0%, transparent 60%),
+    #1e1614;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -434,5 +434,27 @@ kbd {
 }
 
 .app--reduced .pcard {
+  transition-duration: 0.18s !important;
+}
+
+/* Presenter mode: the panel is gone, the street owns the whole display. */
+.app--presenter {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Street reduced motion: no crowd shift, no sway, no bubble pop, no alarm
+   pulse, no drone hover. The pick keeps its information without motion. */
+.app--reduced .deck-layers--scrolling,
+.app--reduced .folk-art,
+.app--reduced .folk-bubble,
+.app--reduced .street--alarm .street-alarm,
+.app--reduced .drone,
+.app--reduced .signal-arcs path,
+.app--reduced .folk--caught .folk-art,
+.app--reduced .folk--flying .folk-art {
+  animation: none !important;
+}
+
+.app--reduced .folk {
   transition-duration: 0.18s !important;
 }

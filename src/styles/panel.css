@@ -837,3 +837,85 @@ select:focus {
 .log-mode--volunteer { color: var(--amber); }
 
 .stat--warn strong { color: var(--amber); }
+
+/* ==========================================================
+   Presenter mode — the audience sees only the street
+   ========================================================== */
+
+.brand-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.brand-actions .btn {
+  width: auto;
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+}
+
+.hostbar {
+  position: fixed;
+  right: clamp(10px, 1.2vw, 22px);
+  bottom: clamp(10px, 1.2vw, 22px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 14px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(47, 38, 35, 0.94);
+  box-shadow: 0 5px 0 var(--ink), 0 16px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+}
+
+.hostbar-round {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 6px;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.hostbar-round b {
+  font-size: 1.2rem;
+  color: var(--amber);
+}
+
+.hostbar-clock {
+  margin-left: 8px;
+  font-style: normal;
+  color: var(--red);
+}
+
+.hostbar .hostbar-btn {
+  width: auto;
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  --drop: 3px;
+}
+
+.hostbar .btn--hero {
+  min-height: 42px;
+  font-size: 0.78rem;
+}
+
+.hostbar-exit {
+  margin-left: 2px;
+}
+
+.app--presenter .hud {
+  font-size: clamp(0.9rem, 1.2vw, 1.25rem);
+}

@@ -104,6 +104,15 @@ const statusLabel = (status, round) => {
   return null
 }
 
+/**
+ * The question takes the whole stage for EVERY kind of round — this is what
+ * the room reads from the back. What sits above the question changes:
+ *   students  — the picked student's name, huge
+ *   guest     — "OVER TO OUR GUEST"
+ *   volunteer — the volunteer's name once tapped; until then a wall of name
+ *               chips the host taps, so recording who answered never needs the
+ *               street to be visible
+ */
 export function QuestionCard({
   round,
   mode,
@@ -112,6 +121,8 @@ export function QuestionCard({
   challengerName,
   answererName,
   pickMode,
+  students = [],
+  onPick,
   timeLeft,
   running,
   totalSeconds,
@@ -121,116 +132,92 @@ export function QuestionCard({
 }) {
   const label = statusLabel(status, round)
   const clockIdle = timeLeft == null && status === 'pending'
+  const guest = mode === 'guest' && !challengerName
+  const volunteer = mode === 'volunteer' && !challengerName
+  const needsVolunteer = volunteer && pickMode && !answererName && status === 'pending'
 
-  /* Once somebody has been picked, the name and the question take the whole
-     stage — this is what the class is reading from the back of the room.
-     Guest and volunteer rounds keep the compact bottom card so the host can
-     still see the feed and tap whoever answered. */
-  if (challengerName) {
-    return (
-      <section className="takeover" aria-live="polite">
-        <div className="takeover-inner">
-          <p className="takeover-kicker">
-            <span>🔔 The algorithm chose</span>
-            <span className="takeover-round">
-              Round {round.number} / {TOTAL_ROUNDS}
-            </span>
-          </p>
+  const kicker = challengerName
+    ? '🔔 The algorithm chose'
+    : guest
+      ? '✓ Guest question'
+      : '✋ Volunteer round'
 
-          <h1 className="takeover-name">{challengerName}</h1>
-
-          {label && <span className={`qcard-status qcard-status--${status}`}>{label}</span>}
-
-          <p className="takeover-question">{question?.text || '(no question set)'}</p>
-
-          {timeLeft != null && (
-            <Countdown
-              seconds={timeLeft}
-              total={totalSeconds}
-              running={running}
-              ejecting={ejecting}
-              done={status === 'ejected' || status === 'timeup'}
-              doneLabel={status === 'ejected' ? 'LOGGED OUT — TIME UP' : 'TIME UP'}
-              big
-            />
-          )}
-
-          <div className="takeover-actions">
-            {clockIdle && (
-              <button className="btn btn--hero" onClick={onStart}>
-                ▶ Start 2:00 <kbd>Space</kbd>
-              </button>
-            )}
-            {(status === 'ejected' || status === 'timeup') && (
-              <button className="btn btn--warn" onClick={onStart}>
-                ↻ Another 2:00
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  const guest = mode === 'guest'
+  const headline = challengerName
+    ? challengerName
+    : guest
+      ? round.guestAnswered
+        ? 'OUR GUEST ANSWERED'
+        : 'OVER TO OUR GUEST'
+      : answererName
+        ? answererName
+        : 'WHO IS ANSWERING?'
 
   return (
-    <section className={`qcard qcard--${mode}`} aria-live="polite">
-      <header className="qcard-head">
-        <span className="qcard-round">
-          Round {round.number} / {TOTAL_ROUNDS}{' '}
-          <em>· {guest ? 'guest question' : mode === 'volunteer' ? 'volunteer round' : 'student question'}</em>
-        </span>
+    <section className={`takeover takeover--${mode}`} aria-live="polite">
+      <div className="takeover-inner">
+        <p className="takeover-kicker">
+          <span>{kicker}</span>
+          <span className="takeover-round">
+            Round {round.number} / {TOTAL_ROUNDS}
+          </span>
+        </p>
+
+        <h1 className={`takeover-name${challengerName || answererName ? '' : ' takeover-name--label'}`}>
+          {headline}
+        </h1>
+
         {label && <span className={`qcard-status qcard-status--${status}`}>{label}</span>}
-      </header>
 
-      <p className="qcard-text">{question?.text || '(no question set)'}</p>
+        <p className="takeover-question">{question?.text || '(no question set)'}</p>
 
-      <p className="qcard-hint">
-        {guest ? (
-          round.guestAnswered ? (
-            <>Answered by our <strong>guest</strong>.</>
-          ) : (
-            <>Over to the <strong>guest speaker</strong>. No guest here? Let the algorithm pick.</>
-          )
-        ) : answererName ? (
-          <>
-            Answering: <strong>{answererName}</strong>
-          </>
-        ) : pickMode ? (
-          <>Tap a card on the feed to record who answered.</>
-        ) : null}
-      </p>
-
-      {/* The clock runs on every question type. On a guest round nobody can be
-          logged out, so at zero it simply reads TIME UP. */}
-      {timeLeft != null && (
-        <Countdown
-          seconds={timeLeft}
-          total={totalSeconds}
-          running={running}
-          ejecting={ejecting}
-          done={status === 'ejected' || status === 'timeup'}
-          doneLabel={status === 'ejected' ? 'LOGGED OUT — TIME UP' : 'TIME UP'}
-        />
-      )}
-
-      <div className="qcard-actions">
-        {clockIdle && (
-          <button className="btn btn--hero" onClick={onStart}>
-            ▶ Start 2:00 <kbd>Space</kbd>
-          </button>
+        {/* Volunteer round, nobody tapped yet: the class as name chips. The host
+            taps one; the audience reads it as "raise your hand". */}
+        {needsVolunteer && (
+          <div className="takeover-picks" role="group" aria-label="Who answered?">
+            {[...students]
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`pick-chip${s.participated ? ' pick-chip--done' : ''}`}
+                  onClick={() => onPick?.(s.id)}
+                >
+                  {s.name.trim() || 'Unnamed student'}
+                </button>
+              ))}
+          </div>
         )}
-        {guest && status === 'pending' && (
-          <button className="btn btn--good" onClick={onGuestAnswered}>
-            ✓ Guest answered
-          </button>
+
+        {timeLeft != null && (
+          <Countdown
+            seconds={timeLeft}
+            total={totalSeconds}
+            running={running}
+            ejecting={ejecting}
+            done={status === 'ejected' || status === 'timeup'}
+            doneLabel={status === 'ejected' ? 'LOGGED OUT — TIME UP' : 'TIME UP'}
+            big
+          />
         )}
-        {(status === 'ejected' || status === 'timeup') && (
-          <button className="btn btn--warn" onClick={onStart}>
-            ↻ Another 2:00
-          </button>
-        )}
+
+        <div className="takeover-actions">
+          {clockIdle && (
+            <button className="btn btn--hero" onClick={onStart}>
+              ▶ Start 2:00 <kbd>Space</kbd>
+            </button>
+          )}
+          {guest && status === 'pending' && (
+            <button className="btn btn--good" onClick={onGuestAnswered}>
+              ✓ Guest answered <kbd>G</kbd>
+            </button>
+          )}
+          {(status === 'ejected' || status === 'timeup') && (
+            <button className="btn btn--warn" onClick={onStart}>
+              ↻ Another 2:00
+            </button>
+          )}
+        </div>
       </div>
     </section>
   )
