@@ -1,5 +1,5 @@
 /* ==========================================================
-   NOODLES — the lobby stage
+   NOODLES — the feed stage
    ========================================================== */
 
 .stage-wrap {
@@ -13,7 +13,6 @@
 
 /* ---------------- HUD strip ---------------- */
 
-/* Arcade marquee: pixel-font score readouts, neon-edged cabinet strip. */
 .hud {
   display: flex;
   align-items: center;
@@ -22,14 +21,15 @@
   padding: var(--s3) clamp(16px, 1.8vw, 30px);
   border: var(--bw) solid var(--ink);
   border-radius: var(--r-lg);
-  background: linear-gradient(180deg, #251a4d 0%, #130c2b 100%);
+  background: var(--panel);
   box-shadow:
     0 var(--drop) 0 var(--ink),
-    inset 0 2px 0 rgba(255, 255, 255, 0.1),
-    inset 0 0 0 2px rgba(255, 61, 220, 0.14);
-  font-family: var(--font-pixel);
-  font-size: clamp(0.5rem, 0.72vw, 0.72rem);
-  letter-spacing: 0.06em;
+    inset 0 2px 0 rgba(255, 255, 255, 0.07);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(0.78rem, 1vw, 1rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   flex: 0 0 auto;
 }
 
@@ -45,38 +45,41 @@
 .hud-round strong,
 .hud-pool strong {
   color: var(--amber);
-  font-size: 1.9em;
-  text-shadow: 0 0 12px rgba(255, 226, 61, 0.7);
+  font-size: 1.5em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .hud-mode {
   padding: var(--s2) var(--s5);
   border-radius: 999px;
-  background: rgba(61, 242, 255, 0.1);
-  border: 2px solid rgba(61, 242, 255, 0.45);
-  color: var(--cyan);
-  box-shadow: inset 0 0 12px rgba(61, 242, 255, 0.12), 0 0 14px rgba(61, 242, 255, 0.2);
-  text-shadow: 0 0 8px rgba(61, 242, 255, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2.5px solid var(--ink);
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.hud-mode--open {
-  background: rgba(255, 210, 61, 0.14);
-  border-color: rgba(255, 210, 61, 0.5);
+.hud-mode--students {
+  background: rgba(79, 195, 232, 0.16);
+  color: var(--cyan);
+}
+
+.hud-mode--guest {
+  background: rgba(72, 225, 123, 0.16);
+  color: var(--green);
+}
+
+.hud-mode--volunteer {
+  background: rgba(255, 210, 61, 0.16);
   color: var(--amber);
   animation: openPulse 2.2s ease-in-out infinite;
 }
 
 @keyframes openPulse {
   50% {
-    box-shadow: 0 0 22px rgba(255, 210, 61, 0.45);
+    background: rgba(255, 210, 61, 0.32);
   }
-}
-
-.hud-pool {
-  color: var(--text-dim);
 }
 
 /* ---------------- stage box ---------------- */
@@ -89,258 +92,446 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r-lg);
-  /* Own stacking context: keeps the crew/tag z-indexes (up to 300) contained
-     so the banner and question card can sit above the whole lobby. */
+  /* Own stacking context: keeps card z-indexes contained so the banner and
+     question card can sit above the whole feed. */
   z-index: 0;
   /* Size container so .deck can size itself against BOTH stage axes below. */
   container-type: size;
 }
 
-/* Matches the room SVG's 1200x800 viewBox, letterboxed inside the stage.
-   Both the artwork and the crew layer fill this box, so a crew member at
-   "50% 51%" is genuinely at the centre of the room at any screen size. */
-/* The deck MUST stay exactly 3:2, because the crew layer maps percentage
-   positions onto this box while the SVG letterboxes inside it. If the box is
-   any other ratio the two disagree and crew drift outside the hull.
-
-   `height: 100% + max-width: 100%` looked right but isn't: when the width cap
-   bites on a narrow screen the height stays at 100%, so the box silently stops
-   being 3:2. Sizing the width against both stage axes keeps the ratio exact —
-   150cqh is 1.5x the stage height, i.e. the widest a 3:2 box can be and still
-   fit vertically. */
+/* The deck MUST stay exactly 3:2: cards map percentage positions onto this
+   box and the frame fills it. Sizing the width against both stage axes keeps
+   the ratio exact — 150cqh is 1.5x the stage height, i.e. the widest a 3:2
+   box can be and still fit vertically. */
 .deck {
   position: relative;
   aspect-ratio: 1200 / 800;
   width: min(100cqw, 150cqh);
   height: auto;
   flex: 0 0 auto;
-  /* Clips the ejected crew member as they clear the hull — they vanish into
-     space rather than sailing across the teacher's panel. */
+  /* Clips the logged-out card as it is swiped off the feed. */
   overflow: hidden;
   border-radius: var(--r-lg);
 }
 
-.room {
+/* ==========================================================
+   The device frame
+   ========================================================== */
+
+.feed {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  filter: drop-shadow(0 24px 50px rgba(0, 0, 0, 0.6));
+  container-type: inline-size;
+  border: 4px solid var(--ink);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(79, 195, 232, 0.08), transparent 70%),
+    linear-gradient(180deg, #171c25 0%, #10141b 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  transition: box-shadow 200ms ease;
 }
 
-/* Two stacked layers over the room: artwork underneath, name tags above.
-   `--crew-w` drives both so the tag always lands just below the character.
+.feed--alarm {
+  animation: feedAlarm 0.7s ease-in-out infinite;
+}
 
-   The container lives on this inner wrapper rather than on .deck itself:
+@keyframes feedAlarm {
+  0%, 100% { box-shadow: inset 0 0 0 4px rgba(215, 30, 34, 0.25), inset 0 0 60px rgba(215, 30, 34, 0.15); }
+  50% { box-shadow: inset 0 0 0 6px rgba(215, 30, 34, 0.7), inset 0 0 120px rgba(215, 30, 34, 0.35); }
+}
+
+/* ---- status bar ---- */
+
+.feed-status {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7.5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  padding: 0 2.2cqw;
+  background: rgba(0, 0, 0, 0.32);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(8px, 1.25cqw, 18px);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.feed-status-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5cqw;
+  color: #fff;
+  letter-spacing: 0.16em;
+}
+
+.feed-status-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-status-title i {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.feed-status-sys {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.1cqw;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.feed-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5cqw;
+  color: var(--green);
+  font-size: 0.85em;
+  text-transform: uppercase;
+}
+
+.feed-online-dot {
+  width: 0.7cqw;
+  height: 0.7cqw;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0.6cqw rgba(72, 225, 123, 0.8);
+}
+
+.feed-signal {
+  color: #fff;
+}
+
+.feed--lost .feed-signal {
+  color: var(--red);
+}
+
+/* ---- tabs ---- */
+
+.feed-tabs {
+  position: absolute;
+  top: 7.5%;
+  left: 0;
+  right: 0;
+  height: 8%;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0 2.2cqw;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(8px, 1.35cqw, 19px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.feed-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5cqw;
+  padding: 0 1.6cqw;
+  color: var(--text-faint);
+  border-bottom: 0.35cqw solid transparent;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+
+.feed-tab--on {
+  color: #fff;
+  border-bottom-color: var(--cyan);
+}
+
+.feed-tab-icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.feed-tabs-mode {
+  margin-left: auto;
+  align-self: center;
+  padding: 0.3cqw 1.2cqw;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 0.8em;
+}
+
+/* ---- feed body ---- */
+
+.feed-body {
+  position: absolute;
+  top: 15.5%;
+  left: 0;
+  right: 0;
+  bottom: 12.5%;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(6cqw - 1px),
+      rgba(255, 255, 255, 0.025) calc(6cqw - 1px),
+      rgba(255, 255, 255, 0.025) 6cqw
+    );
+}
+
+.feed-scrollbar {
+  position: absolute;
+  top: 1.5%;
+  bottom: 1.5%;
+  right: 0.6cqw;
+  width: 0.55cqw;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.feed-scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.feed--scrolling .feed-scrollbar-thumb {
+  animation: thumbScroll 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes thumbScroll {
+  0% { top: 0; }
+  100% { top: 78%; }
+}
+
+/* ---- era dock ---- */
+
+.feed-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  gap: 1.5cqw;
+  padding: 0 2.2cqw;
+  background: rgba(0, 0, 0, 0.36);
+  border-top: 2px solid rgba(0, 0, 0, 0.5);
+}
+
+.feed-dock-label {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(8px, 1.2cqw, 16px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  padding-right: 1.5cqw;
+  border-right: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.eras {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1cqw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  position: relative;
+}
+
+/* the timeline rail running behind the eras */
+.eras::before {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 30%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--text-faint), var(--cyan));
+  opacity: 0.45;
+}
+
+.era {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.15cqw;
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  text-align: center;
+}
+
+.era-icon {
+  width: 2.6cqw;
+  height: 2.6cqw;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 2px solid var(--ink);
+  color: var(--text);
+  box-shadow: 0 2px 0 var(--ink);
+}
+
+.era-icon svg {
+  width: 62%;
+  height: 62%;
+}
+
+.era:last-child .era-icon {
+  color: var(--cyan);
+  border-color: rgba(79, 195, 232, 0.5);
+}
+
+.era-year {
+  font-size: clamp(7px, 1cqw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fff;
+}
+
+.era-label {
+  font-size: clamp(6px, 0.85cqw, 11px);
+  font-weight: 600;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ---- signal lost wash (logout) ---- */
+
+.feed-lost-wash {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(215, 30, 34, 0.08) 0 2px,
+    transparent 2px 5px
+  );
+  transition: opacity 220ms ease;
+}
+
+.feed-lost-wash span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(14px, 3.4cqw, 48px);
+  letter-spacing: 0.3em;
+  color: var(--red);
+  text-shadow: 0 3px 0 var(--ink);
+  opacity: 0.55;
+}
+
+.feed--lost .feed-lost-wash {
+  opacity: 1;
+  animation: lostFlicker 0.35s steps(2, end) infinite;
+}
+
+@keyframes lostFlicker {
+  50% { opacity: 0.6; }
+}
+
+/* ==========================================================
+   The cards
+   ========================================================== */
+
+/* The container lives on this inner wrapper rather than on .deck itself:
    inline-size containment would stop .deck's `width: auto` from deriving off
-   its aspect-ratio, and the room would letterbox inside a taller box. */
+   its aspect-ratio. Lobby sets --card-w and --name-fs inline. */
 .deck-layers {
   position: absolute;
   inset: 0;
   container-type: inline-size;
   pointer-events: none;
-  /* Defaults; Lobby overrides both inline as the class grows. These must live
-     here rather than on .crew-layer/.tag-layer — a custom property re-declared
-     on a descendant beats the value inherited from this element, so a fallback
-     further down would silently win over Lobby's inline value. */
-  --crew-w: 6.6cqw;
-  /* Names shrink to FIT the seat pitch rather than truncating into ambiguity
-     ("Student10" → "Student1" makes two students indistinguishable). */
-  --tag-fs: clamp(8px, calc(var(--crew-w) * 0.29), 19px);
+  --card-w: 16cqw;
+  --name-fs: clamp(8px, 1.6cqw, 22px);
 }
 
-/* Sized in container units, not viewport units: a crew member is a fixed
-   fraction of the ROOM, so the lobby scales as one picture from a narrow pane
-   up to a classroom projector instead of the characters swelling out of the
-   hull on small screens. */
-.crew-layer,
-.tag-layer {
+.deck-layers--scrolling {
+  animation: feedScroll 0.72s ease-in-out infinite;
+}
+
+@keyframes feedScroll {
+  0%, 100% { transform: translateY(-0.5%); }
+  50% { transform: translateY(0.5%); }
+}
+
+.pcard {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* Inherits --crew-w from .deck-layers; both derive from it so the tag always
-     lands just under the character whatever the class size. */
-  --art-h: calc(var(--crew-w) * 1.15);
-}
-
-.tag-layer--picking .tag,
-.crew-layer .crew[onclick] {
-  pointer-events: auto;
-}
-
-/* ---------------- room ambience ---------------- */
-
-.holo-glow {
-  transform-origin: 600px 400px;
-  animation: holoBreath 4.5s ease-in-out infinite;
-}
-
-@keyframes holoBreath {
-  50% {
-    transform: scale(1.09);
-    opacity: 0.75;
-  }
-}
-
-.holo-ring {
-  transform-origin: 600px 400px;
-  animation: spinCw 22s linear infinite;
-}
-
-.holo-ring--b {
-  animation: spinCcw 15s linear infinite;
-}
-
-@keyframes spinCw {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spinCcw {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-.floor-strips rect {
-  animation: stripGlow 5s ease-in-out infinite;
-}
-
-@keyframes stripGlow {
-  50% {
-    opacity: 0.2;
-  }
-}
-
-.screen {
-  animation: flicker 3.4s steps(2, end) infinite;
-}
-.screen--1 { animation-delay: 0.6s; }
-.screen--2 { animation-delay: 1.3s; }
-.screen--3 { animation-delay: 2.1s; }
-
-@keyframes flicker {
-  0%, 92%, 100% { opacity: 1; }
-  95% { opacity: 0.55; }
-}
-
-.star {
-  animation: twinkle 3s ease-in-out infinite;
-}
-.star--1 { animation-delay: 0.9s; }
-.star--2 { animation-delay: 1.8s; }
-
-@keyframes twinkle {
-  50% { opacity: 0.25; }
-}
-
-/* ---------------- airlock ---------------- */
-
-.airlock-door {
-  transition: transform 720ms cubic-bezier(0.6, -0.05, 0.25, 1.2);
-}
-
-.room--airlock-open .airlock-door--top {
-  transform: translateY(-112px);
-}
-
-.room--airlock-open .airlock-door--bottom {
-  transform: translateY(112px);
-}
-
-.beacon {
-  opacity: 0.25;
-}
-
-.room--alarm .beacon {
-  animation: beaconFlash 0.55s steps(2, end) infinite;
-}
-
-.beacon--delay {
-  animation-delay: 0.27s !important;
-}
-
-@keyframes beaconFlash {
-  0%, 49% { opacity: 1; filter: drop-shadow(0 0 12px var(--red)); }
-  50%, 100% { opacity: 0.2; filter: none; }
-}
-
-/* ---------------- alarm wash ---------------- */
-
-.alarm-layer {
-  opacity: 0;
-  transition: opacity 260ms ease;
-  pointer-events: none;
-}
-
-.room--alarm .alarm-layer {
-  animation: alarmWash 0.75s ease-in-out infinite;
-}
-
-@keyframes alarmWash {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
-
-.strobes circle {
-  opacity: 0;
-}
-
-.room--alarm .strobes circle {
-  animation: strobe 0.55s steps(2, end) infinite;
-  filter: drop-shadow(0 0 18px var(--red));
-}
-
-.room--alarm .strobes circle:nth-child(2),
-.room--alarm .strobes circle:nth-child(3) {
-  animation-delay: 0.27s;
-}
-
-@keyframes strobe {
-  0%, 49% { opacity: 0.95; }
-  50%, 100% { opacity: 0; }
-}
-
-/* ==========================================================
-   Crew members
-   ========================================================== */
-
-.crew {
-  position: absolute;
+  width: var(--card-w);
   transform: translate(-50%, -50%);
-  display: block;
-  padding: 0;
-  border: 0;
-  background: none;
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--card-w) * 0.025);
+  padding: calc(var(--card-w) * 0.07) calc(var(--card-w) * 0.06) calc(var(--card-w) * 0.08);
+  border: max(2px, calc(var(--card-w) * 0.018)) solid var(--ink);
+  border-radius: calc(var(--card-w) * 0.13);
+  background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+  color: inherit;
+  font: inherit;
+  box-shadow:
+    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
+    0 10px 24px rgba(0, 0, 0, 0.35);
   transition:
     left 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
     top 900ms cubic-bezier(0.5, -0.2, 0.3, 1.3),
-    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    opacity 300ms ease;
   will-change: transform, left, top;
 }
 
-.tag-layer--picking ~ * .crew,
-.tag-layer--picking .tag {
+.deck-layers--picking .pcard {
+  pointer-events: auto;
   cursor: pointer;
 }
 
-.crew-art {
+.deck-layers--picking .pcard:hover,
+.deck-layers--picking .pcard:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: var(--amber);
+}
+
+.pcard-avatar {
   display: block;
   animation: bob var(--bob-dur, 3.4s) ease-in-out var(--bob-delay, 0s) infinite;
 }
 
 @keyframes bob {
   0%, 100% { transform: translateY(0) rotate(-1.2deg); }
-  50% { transform: translateY(-7px) rotate(1.2deg); }
+  50% { transform: translateY(-4%) rotate(1.2deg); }
 }
 
-.crew-svg {
-  width: var(--crew-w);
+.pcard-avatar .crew-svg {
+  width: calc(var(--card-w) * 0.6);
   height: auto;
   display: block;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
 }
 
 .crew-bead {
@@ -351,120 +542,120 @@
   50% { filter: drop-shadow(0 0 6px #ffe27a); }
 }
 
-/* ---- name tags (own layer, always above all artwork) ---- */
-
-.tag {
-  position: absolute;
-  /* Anchored on the slot, nudged down so it sits just under the character. */
-  transform: translate(-50%, calc(var(--art-h) * 0.42));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  /* Hidden by default — see Lobby.jsx. Kept in the DOM (not unmounted) so the
-     pick-mode buttons stay focusable and the reveal can animate. */
-  opacity: 0;
-  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
-}
-
-/* All names on: teacher toggle, or picking a volunteer. */
-.tag-layer--names .tag,
-/* …and always for whoever is in the spotlight right now. */
-.tag--spotlight,
-.tag--caught,
-.tag--answerer,
-.tag:hover,
-.tag:focus-visible {
-  opacity: 1;
-}
-
-.tag--hidden {
-  opacity: 0 !important;
-}
-
-.tag-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  /* Whichever is tighter: a sane character cap, or the space this seat
-     actually has (set by Lobby from the seat pitch). Long names ellipsise
-     rather than colliding with the neighbour. 18ch, not 15: the font formula
-     fits names up to 14 chars, and 14 average glyphs ≈ 16.2ch (a ch is the
-     width of "0", narrower than the average letter) plus the ✓ tick. */
-  max-width: min(18ch, var(--tag-max, 18ch));
-  padding: 0.25em 0.6em;
-  border: 2.5px solid var(--ink);
-  border-radius: 999px;
-  background: rgba(12, 15, 30, 0.94);
-  font-size: var(--tag-fs);
-  font-weight: 800;
+.pcard-name {
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: var(--name-fs);
+  font-weight: 700;
+  line-height: 1.15;
   letter-spacing: 0.02em;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 3px 0 var(--ink);
-  transition: background 200ms ease, color 200ms ease, box-shadow 200ms ease;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
 }
 
-.tag-tick {
+.pcard-meta {
+  font-family: var(--font-display);
+  font-size: calc(var(--name-fs) * 0.62);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--green);
-  font-size: 0.9em;
+  white-space: nowrap;
 }
 
-/* ---- already participated: dim slightly, keep them in the room ---- */
-
-/* Already had a turn: still aboard, still seated, just visibly "done" — this
-   is the only cue left once name tags are hidden, so it has to read clearly. */
-.crew--done .crew-art {
-  opacity: 0.5;
-  filter: saturate(0.35);
+/* Names off: only the cards that matter right now keep theirs. */
+.deck-layers:not(.deck-layers--names)
+  .pcard:not(.pcard--spotlight):not(.pcard--caught):not(.pcard--answerer)
+  .pcard-name {
+  display: none;
 }
 
-.tag--done .tag-name {
-  background: rgba(24, 58, 42, 0.94);
+.pcard-badge {
+  position: absolute;
+  top: calc(var(--card-w) * -0.07);
+  right: calc(var(--card-w) * -0.07);
+  min-width: calc(var(--card-w) * 0.22);
+  height: calc(var(--card-w) * 0.22);
+  padding: 0 calc(var(--card-w) * 0.05);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  border: max(2px, calc(var(--card-w) * 0.015)) solid var(--ink);
+  font-family: var(--font-display);
+  font-size: calc(var(--card-w) * 0.12);
+  font-weight: 700;
+  box-shadow: 0 2px 0 var(--ink);
+  animation: badgePop 480ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
 
-/* ---- spotlight during the spin ---- */
-
-.crew--spotlight {
-  transform: translate(-50%, -50%) scale(1.22);
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
 }
 
-/* With every other name hidden, the live one can afford to be much bigger. */
-.tag--spotlight {
-  transform: translate(-50%, calc(var(--art-h) * 0.62)) scale(1.6);
+/* ---- already had a turn ---- */
+
+.pcard--done {
+  opacity: 0.62;
 }
 
-.tag--spotlight .tag-name {
-  background: var(--cyan);
-  color: #04202b;
-  box-shadow: 0 3px 0 var(--ink), 0 0 26px var(--cyan);
+.pcard--done .crew-svg {
+  filter: saturate(0.3) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
 }
 
-.crew--spotlight .crew-svg {
-  filter: drop-shadow(0 0 16px var(--cyan)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+.pcard--done .pcard-meta {
+  color: var(--text-dim);
 }
 
-/* ---- locked in ---- */
+/* ---- the algorithm scrolling past ---- */
+
+.pcard--spotlight {
+  transform: translate(-50%, -50%) scale(1.14);
+  border-color: var(--cyan);
+  box-shadow:
+    0 0 0 max(3px, calc(var(--card-w) * 0.025)) rgba(79, 195, 232, 0.55),
+    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
+    0 0 40px rgba(79, 195, 232, 0.5);
+  opacity: 1;
+  transition-duration: 0ms;
+}
+
+.pcard--spotlight .pcard-meta {
+  color: var(--cyan);
+}
+
+/* ---- volunteer answering ---- */
+
+.pcard--answerer {
+  transform: translate(-50%, -50%) scale(1.16);
+  border-color: var(--amber);
+  box-shadow:
+    0 0 0 max(3px, calc(var(--card-w) * 0.025)) rgba(255, 210, 61, 0.5),
+    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
+    0 0 36px rgba(255, 210, 61, 0.45);
+  opacity: 1;
+}
+
+.pcard--answerer .pcard-meta {
+  color: var(--amber);
+}
 
 /* ==========================================================
-   THE CATCH — the moment the spin locks in.
+   THE PICK — the moment the algorithm locks in.
 
    Beat order, all firing together:
-     1. camera punches in and shakes      (.deck--punch)
-     2. the room drops into shadow, one pool of light left  (.fx-spot)
-     3. two shockwave rings burst outward (.fx-burst)
-     4. sparks fly                        (.fx-sparks)
-     5. the culprit pops, squashes, then hovers (.crew--caught)
+     1. camera punches in and shakes            (.deck--punch)
+     2. the feed drops into shadow, one card lit (.fx-spot)
+     3. two shockwave rings burst outward        (.fx-burst)
+     4. sparks fly                               (.fx-sparks)
+     5. the card pops with a red notification badge (.pcard--caught)
    ========================================================== */
 
-/* 1. Camera punch. Scaling .deck moves the room AND everyone standing in it,
-   so it reads as the camera lunging rather than the art growing. */
 .deck--punch {
   animation: deckPunch 820ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
 }
@@ -479,9 +670,7 @@
   100% { transform: scale(1) translate(0, 0); }
 }
 
-/* 2. Spotlight. A hole of clear light over the culprit, deep shadow elsewhere.
-   Sits above ordinary crew (z ≤ 90) but below the caught crew member (150),
-   so everyone else is swallowed while they stay lit. */
+/* Sits above ordinary cards (z 10) but below the picked card (150). */
 .fx-spot {
   position: absolute;
   inset: 0;
@@ -489,11 +678,11 @@
   pointer-events: none;
   background: radial-gradient(
     circle at var(--fx-x) var(--fx-y),
-    rgba(255, 214, 92, 0.26) 0,
-    rgba(255, 160, 60, 0.1) 5cqw,
-    rgba(4, 6, 14, 0.55) 13cqw,
-    rgba(3, 4, 11, 0.88) 34cqw,
-    rgba(2, 3, 8, 0.94) 100%
+    rgba(255, 214, 92, 0.22) 0,
+    rgba(255, 160, 60, 0.08) 6cqw,
+    rgba(4, 6, 14, 0.6) 15cqw,
+    rgba(3, 4, 11, 0.9) 36cqw,
+    rgba(2, 3, 8, 0.95) 100%
   );
   animation: spotIn 460ms ease-out both;
 }
@@ -503,7 +692,6 @@
   to { opacity: 1; }
 }
 
-/* 3. Shockwave rings — behind the crew member, in front of the shadow. */
 .fx-burst {
   position: absolute;
   z-index: 110;
@@ -516,8 +704,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 26cqw;
-  height: 26cqw;
+  width: 28cqw;
+  height: 28cqw;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
@@ -559,7 +747,6 @@
   100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; border-width: 0.06cqw; }
 }
 
-/* 4. Sparks — in front of the crew member, behind the name tags. */
 .fx-sparks {
   position: absolute;
   z-index: 160;
@@ -596,14 +783,17 @@
   100% { transform: rotate(var(--a)) translateX(var(--d)) scale(0); opacity: 0; }
 }
 
-/* 5. The culprit: yanked upward, squashed on landing, then left hovering.
-   Scale lives on .crew (positioning) and the pop on .crew-art, so the two
-   never fight over the same transform. */
-.crew--caught {
-  transform: translate(-50%, -50%) scale(1.38);
+.pcard--caught {
+  transform: translate(-50%, -50%) scale(1.4);
+  border-color: var(--red);
+  box-shadow:
+    0 0 0 max(3px, calc(var(--card-w) * 0.03)) rgba(215, 30, 34, 0.55),
+    0 max(3px, calc(var(--card-w) * 0.03)) 0 var(--ink),
+    0 0 50px rgba(215, 30, 34, 0.55);
+  opacity: 1;
 }
 
-.crew--caught .crew-art {
+.pcard--caught .pcard-avatar {
   animation: caughtPop 820ms cubic-bezier(0.2, 1.5, 0.35, 1) both;
   transform-origin: 50% 100%;
 }
@@ -618,67 +808,25 @@
   100% { transform: translateY(-11%) scale(1, 1) rotate(0); }
 }
 
-.tag--caught {
-  transform: translate(-50%, calc(var(--art-h) * 0.78)) scale(2);
+.pcard--caught .pcard-meta {
+  color: var(--red);
 }
 
-.tag--caught .tag-name {
-  background: var(--red);
-  color: #fff;
-  box-shadow: 0 3px 0 var(--ink), 0 0 30px var(--red);
-}
+/* ---- logged out: swiped off the feed ---- */
 
-.crew--caught .crew-svg {
-  filter: drop-shadow(0 0 22px var(--red)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
-}
-
-/* ---- the launch: pulled out through the airlock, playful tumble ---- */
-
-.crew--flying {
+.pcard--flying {
   transition:
     left 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
     top 1150ms cubic-bezier(0.55, 0, 0.85, 0.35),
-    transform 1150ms ease-in;
-  transform: translate(-50%, -50%) scale(0.4) rotate(420deg);
-  opacity: 0.9;
+    transform 1150ms ease-in,
+    opacity 1150ms ease-in;
+  transform: translate(-50%, -50%) scale(0.55) rotate(22deg);
+  opacity: 0.4;
+  filter: grayscale(1);
 }
 
-.crew--flying .crew-art {
-  animation: tumble 0.55s linear infinite;
-}
-
-@keyframes tumble {
-  to { transform: rotate(360deg); }
-}
-
-/* ---- volunteer-round pick mode ---- */
-
-.tag-layer--picking .tag:hover .tag-name,
-.tag-layer--picking .tag:focus-visible .tag-name {
-  background: var(--amber);
-  color: #2a1d02;
-}
-
-.tag-layer--picking .tag:hover {
-  transform: translate(-50%, calc(var(--art-h) * 0.42)) scale(1.12);
-}
-
-.crew--answerer {
-  transform: translate(-50%, -50%) scale(1.2);
-}
-
-.tag--answerer {
-  transform: translate(-50%, calc(var(--art-h) * 0.55)) scale(1.14);
-}
-
-.tag--answerer .tag-name {
-  background: var(--amber);
-  color: #2a1d02;
-  box-shadow: 0 3px 0 var(--ink), 0 0 26px rgba(255, 210, 61, 0.8);
-}
-
-.crew--answerer .crew-svg {
-  filter: drop-shadow(0 0 18px var(--amber)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+.pcard--flying .pcard-avatar {
+  animation: none;
 }
 
 /* ---------------- empty state ---------------- */
@@ -687,7 +835,7 @@
 .off-deck {
   position: absolute;
   right: 14px;
-  bottom: 12px;
+  bottom: 13.5%;
   z-index: 60;
   padding: 5px 12px;
   border: 2.5px solid var(--ink);

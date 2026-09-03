@@ -1,43 +1,71 @@
 /**
  * NOODLES — shared configuration.
- * Everything a teacher might reasonably want to tweak without touching logic
+ * Everything a host might reasonably want to tweak without touching logic
  * lives in this file.
  */
 
 export const STORAGE_KEY = 'noodles.session.v1'
+export const CLOCK_KEY = 'noodles.clock.v1'
 export const TOTAL_ROUNDS = 10
 
-/**
- * Volunteer (open) rounds — anyone may answer, no spin.
- * Every other round draws one crew member at random.
- * Edit this set to re-balance the lesson.
- */
-export const OPEN_ROUNDS = new Set([2, 4, 7, 9, 10])
+/** Rounds are numbered 1..10 and displayed as-is. */
+export const displayRoundNumber = (roundNumber) => roundNumber
 
-export const isOpenRound = (roundNumber) => OPEN_ROUNDS.has(roundNumber)
+/* ------------------------------------------------------------------ *
+ * SESSION — the talk this game is built around. Shown on the feed's
+ * status bar, the panel brand and the end-of-session card.
+ * ------------------------------------------------------------------ */
+export const SESSION = {
+  title: 'From Scroll to Soul',
+  subtitle: 'How Digital Evolution Shaped Generations',
+  feedName: 'For You',
+}
 
-/** How long a caught crew member has to answer before the airlock cycles. */
+/* ------------------------------------------------------------------ *
+ * ROUND MODES
+ *   students  — the algorithm scrolls the feed and picks one student.
+ *   guest     — for the invited guest speaker; no scroll. If no guest is
+ *               in the room the host can hand it to the algorithm instead.
+ *   volunteer — anyone may answer; host taps whoever spoke up. Same
+ *               algorithm fallback if nobody raises a hand.
+ * ------------------------------------------------------------------ */
+export const MODES = ['students', 'guest', 'volunteer']
+
+export const MODE_LABEL = {
+  students: 'Students',
+  guest: 'Guest',
+  volunteer: 'Volunteer',
+}
+
+/** Copy the room reads on the feed, per mode. */
+export const MODE_COPY = {
+  students: { hud: 'FOR YOU — THE ALGORITHM PICKS', card: 'Student question' },
+  guest: { hud: 'VERIFIED GUEST — OVER TO OUR GUEST', card: 'Guest question' },
+  volunteer: { hud: 'RAISE YOUR HAND — ANYONE MAY ANSWER', card: 'Volunteer question' },
+}
+
+/** How long a selected student has to answer before they are logged out. */
 export const ANSWER_SECONDS = 120
 
 /* ------------------------------------------------------------------ *
- * SELECTION timeline (milliseconds from the Spin button press).
+ * SELECTION timeline (milliseconds from the Select button press).
  *
  * The supplied sting is 4.97s long and its dramatic impact peaks at
  * 1.18s. We therefore schedule the clip LATE so the peak collides with
- * the lock-in frame, and cover the earlier cycling with a synthesised
- * riser. See game/audio.js.
+ * the lock-in frame, and cover the earlier scrolling with a synthesised
+ * modem-style riser. See game/audio.js.
  *
- * Nobody is ejected here — the catch only starts the clock.
+ * Nobody is logged out here — the pick only starts the clock.
  * ------------------------------------------------------------------ */
 export const TIMING = {
-  spin: 2800, // name-cycling duration → lock-in happens at this mark
+  spin: 4200, // the feed scroll decelerates into the lock-in at this mark
   audioPeakOffset: 1180, // measured offset of the sting's impact
-  alarm: 2800, // red strobe begins
-  banner: 2900, // "IMPOSTOR" banner slams in
-  alarmOff: 4400,
-  audioFade: 4200, // begin fading the sting out
+  alarm: 4200, // notification pulse begins
+  banner: 4380, // "THE ALGORITHM CHOSE" banner slams in
+  alarmOff: 5700,
+  audioFade: 5450, // begin fading the sting out
   audioFadeDur: 600,
-  settle: 4600, // question appears and the 2:00 countdown starts
+  settle: 6000, // question appears after the pick has landed
 }
 
 /** Reduced-motion runs the same beats, just compressed. */
@@ -53,14 +81,14 @@ export const TIMING_REDUCED = {
 }
 
 /* ------------------------------------------------------------------ *
- * EJECTION timeline (milliseconds from the moment the timer hits zero).
- * This is where the airlock actually opens and the crew member goes.
+ * LOGOUT timeline (milliseconds from the moment the timer hits zero).
+ * The card loses signal, greys out and is swiped off the feed for good.
  * ------------------------------------------------------------------ */
 export const EJECT = {
-  alarm: 0, // strobe + airlock doors part
-  launch: 700, // pulled toward the open airlock
-  audioPeakOffset: 1180, // sting peak lands on the launch frame
-  gone: 2600, // cleared the hull — off the craft for good, doors close
+  alarm: 0, // red "signal lost" pulse
+  launch: 700, // card swipes away
+  audioPeakOffset: 1180, // sting peak lands on the swipe frame
+  gone: 2600, // off the feed — logged out for the session
   audioFade: 3000,
   audioFadeDur: 700,
   settle: 3400,
@@ -77,7 +105,19 @@ export const EJECT_REDUCED = {
 }
 
 /* ------------------------------------------------------------------ *
- * Original crew palette — vivid hull colours with a matching dark shade
+ * The era dock under the feed — the generational arc both talks trace,
+ * from scheduled and physical to instant and always-on.
+ * ------------------------------------------------------------------ */
+export const ERAS = [
+  { year: '1990s', label: 'Newspaper & letters', icon: 'paper' },
+  { year: '2000s', label: 'Landline & SMS', icon: 'phone' },
+  { year: '2010s', label: 'Smartphone & social', icon: 'mobile' },
+  { year: '2020s', label: 'Short-form & always-on', icon: 'reel' },
+  { year: 'Next', label: 'AI-shaped everything', icon: 'ai' },
+]
+
+/* ------------------------------------------------------------------ *
+ * Original crew palette — vivid suit colours with a matching dark shade
  * used for the underside of each pod so the characters read as 3D.
  * ------------------------------------------------------------------ */
 export const CREW_COLORS = [
@@ -114,18 +154,18 @@ export const SAMPLE_STUDENTS = [
   'Vasanth', 'Vennila', 'Yuvan',
 ]
 
-/* Reflective, open-ended speaking prompts — the kind an emcee asks someone who
-   has just been pulled on stage. Rounds 2, 4, 7, 9 and 10 are volunteer rounds
-   and are phrased as an invitation to the whole room. */
+/* The session's ten prompts, each with the audience it is addressed to.
+   Every field is editable in the Questions tab; this is only the starting
+   deck. */
 export const SAMPLE_QUESTIONS = [
-  'What does your daily routine say about your future?',
-  'VOLUNTEER: What is more difficult — starting a good habit or breaking a bad one? Why?',
-  'If you could master one skill instantly, what would it be — and what would you do with it first?',
-  'VOLUNTEER: What is one piece of advice you would give your younger self?',
-  'Tell us about a small failure that taught you something big.',
-  'What is one small habit you are ignoring today that could change your tomorrow?',
-  'VOLUNTEER: What is something everyone seems to love that you just do not get?',
-  'If your life had a loading screen, what tip would it show?',
-  'VOLUNTEER: Describe your week in exactly three words — then explain one of them.',
-  'VOLUNTEER: What is one thing this team should start doing from tomorrow?',
+  { mode: 'students', text: 'What is one thing the internet taught you outside the classroom?' },
+  { mode: 'guest', text: 'What workplace habit has technology completely changed for you?' },
+  { mode: 'students', text: 'Are we creating memories — or just recording them?' },
+  { mode: 'guest', text: 'Are we using technology to express ourselves, or are algorithms influencing who we become?' },
+  { mode: 'students', text: 'When did scrolling last change your mood?' },
+  { mode: 'volunteer', text: 'What would you miss first during a day without your phone?' },
+  { mode: 'students', text: 'Has instant information made us curious — or impatient?' },
+  { mode: 'students', text: 'Has technology helped us express ourselves — or made us follow everyone else?' },
+  { mode: 'students', text: 'What old-school habit should our generation bring back?' },
+  { mode: 'students', text: 'In an AI-powered future, what should always remain human?' },
 ]

@@ -1,4 +1,5 @@
-import { reducer, initialState, displayName, save, load } from '../src/game/state.js'
+import { reducer, initialState, displayName, save, load, modeOf } from '../src/game/state.js'
+import { TOTAL_ROUNDS, SAMPLE_QUESTIONS } from '../src/game/constants.js'
 
 // Minimal localStorage shim so save()/load() are testable in Node.
 globalThis.localStorage = (() => {
@@ -38,7 +39,7 @@ check('new name joins pool', t.pool.includes(t.students.find(x=>x.name==='Dot').
 // --- 3. blank name never renders empty
 let u = initialState()
 u = reducer(u, { type: 'student/rename', id: u.students[0].id, name: '   ' })
-check('blank name -> placeholder', displayName(u.students[0]) === 'Unnamed crew',
+check('blank name -> placeholder', displayName(u.students[0]) === 'Unnamed student',
   JSON.stringify(displayName(u.students[0])))
 
 // --- 4. removing a student cleans every reference
@@ -50,32 +51,72 @@ check('remove clears caughtId', v.caughtId === null)
 check('remove clears round.selectedId', v.rounds[0].selectedId === null)
 check('remove clears pool entry', !v.pool.includes(vid))
 
-// --- 5. ejecting everyone leaves an empty pool, no crash
+// --- 5. logging everyone out leaves an empty pool, no crash
 let w = initialState()
 for (const st of w.students) w = reducer(w, { type: 'student/eject', id: st.id })
-check('all ejected -> empty pool', w.pool.length === 0, `pool=${w.pool.length}`)
-check('all ejected -> roster intact', w.students.length === initialState().students.length)
+check('all logged out -> empty pool', w.pool.length === 0, `pool=${w.pool.length}`)
+check('all logged out -> roster intact', w.students.length === initialState().students.length)
 w = reducer(w, { type: 'session/resetProgress' })
 check('reset brings everyone back', w.students.every(x=>!x.ejected) && w.pool.length === w.students.length)
 
-// --- 6. round statuses
+// --- 6. the session deck: ten rounds, modes come from the questions
 let x = initialState()
-check('rounds 2,4,7,9,10 are volunteer',
-  x.rounds.filter(r=>r.open).map(r=>r.number).join(',') === '2,4,7,9,10')
+check('ten rounds', x.rounds.length === 10 && TOTAL_ROUNDS === 10)
+check('guest rounds are 2 and 4',
+  x.rounds.filter(r => modeOf(x, r.number) === 'guest').map(r=>r.number).join(',') === '2,4')
+check('volunteer round is 6',
+  x.rounds.filter(r => modeOf(x, r.number) === 'volunteer').map(r=>r.number).join(',') === '6')
+check('the rest are student rounds',
+  x.rounds.filter(r => modeOf(x, r.number) === 'students').length === 7)
+check('questions are the session prompts verbatim',
+  x.questions.every((q, i) => q.text === SAMPLE_QUESTIONS[i].text))
 
-// --- 7. volunteer pick marks answered, but not when someone was spun for
+// --- 7. volunteer pick marks answered, but not when the algorithm picked someone
 let y = initialState()
-y = reducer(y, { type: 'round/goto', number: 2 })
+y = reducer(y, { type: 'round/goto', number: 6 })
 y = reducer(y, { type: 'round/pickAnswerer', id: y.students[0].id })
-check('volunteer pick -> answered', y.rounds[1].status === 'answered')
+check('volunteer tap -> answered', y.rounds[5].status === 'answered')
+check('volunteer tap -> participated', y.students[0].participated === true)
 let z = initialState()
-z = reducer(z, { type: 'round/goto', number: 2 })
+z = reducer(z, { type: 'round/goto', number: 6 })
 const zid = z.students[1].id
 z = reducer(z, { type: 'spin/commit', id: zid, pool: z.pool.filter(i=>i!==zid) })
 z = reducer(z, { type: 'round/pickAnswerer', id: z.students[0].id })
-check('spun volunteer round stays pending', z.rounds[1].status === 'pending', z.rounds[1].status)
+check('picked volunteer round stays pending', z.rounds[5].status === 'pending', z.rounds[5].status)
 
-// --- 8. an emptied roster self-heals on load, keeping edited questions
+// --- 8. guest rounds: guest answered closes the round without touching students
+let g = initialState()
+g = reducer(g, { type: 'round/goto', number: 2 })
+g = reducer(g, { type: 'round/reveal' })
+g = reducer(g, { type: 'round/guestAnswered' })
+check('guest answered -> answered', g.rounds[1].status === 'answered' && g.rounds[1].guestAnswered === true)
+check('guest answered -> no student marked', g.students.every(st => !st.participated))
+check('guest answered -> pool untouched', g.pool.length === g.students.length)
+
+// --- 9. time up closes a round without logging anyone out
+let tu = initialState()
+tu = reducer(tu, { type: 'round/goto', number: 2 })
+tu = reducer(tu, { type: 'round/reveal' })
+tu = reducer(tu, { type: 'round/timeup' })
+check('time up -> status timeup', tu.rounds[1].status === 'timeup')
+check('time up -> nobody logged out', tu.students.every(st => !st.ejected))
+
+// --- 10. a host can change who a question is for
+let qm = initialState()
+qm = reducer(qm, { type: 'question/mode', id: 'q1', mode: 'guest' })
+check('question mode edit re-labels round', modeOf(qm, 1) === 'guest')
+qm = reducer(qm, { type: 'question/mode', id: 'q1', mode: 'bogus' })
+check('bogus mode rejected', modeOf(qm, 1) === 'guest')
+
+// --- 11. re-running a round voids its previous outcome
+let rr = initialState()
+rr = reducer(rr, { type: 'round/goto', number: 2 })
+rr = reducer(rr, { type: 'round/guestAnswered' })
+rr = reducer(rr, { type: 'spin/start' })
+check('re-run clears guestAnswered + status',
+  rr.rounds[1].status === 'pending' && rr.rounds[1].guestAnswered === false)
+
+// --- 12. an emptied roster self-heals on load, keeping edited questions
 let e1 = initialState()
 for (const st of [...e1.students]) e1 = reducer(e1, { type: 'student/remove', id: st.id })
 e1 = reducer(e1, { type: 'question/edit', id: 'q1', text: 'CUSTOM QUESTION' })
@@ -88,38 +129,39 @@ check('self-heal keeps edited questions', healed.questions[0].text === 'CUSTOM Q
 check('self-heal rebuilds pool', healed.pool.length === healed.students.length)
 localStorage.clear()
 
-// --- 9. Load sample crew button refills an emptied roster in place
+// --- 13. Load sample button refills an emptied roster in place
 let e2 = initialState()
 e2 = reducer(e2, { type: 'question/edit', id: 'q2', text: 'KEEP ME' })
 for (const st of [...e2.students]) e2 = reducer(e2, { type: 'student/remove', id: st.id })
 e2 = reducer(e2, { type: 'roster/loadSample' })
 check('loadSample refills roster',
   e2.students.length > 0 && e2.pool.length === e2.students.length,
-  `${e2.students.length} aboard, pool ${e2.pool.length}`)
+  `${e2.students.length} online, pool ${e2.pool.length}`)
 check('loadSample keeps questions', e2.questions[1].text === 'KEEP ME')
+
+// --- 14. migration: a session saved by the previous build (8 rounds, `open` flags)
+localStorage.setItem('noodles.session.v1', JSON.stringify({
+  version: 1, currentRound: 3, phase: 'lobby',
+  students: [{ id: 'a', name: 'Ana', colorId: 'lime', points: 4, participated: true }],
+  pool: ['a'],
+  rounds: [{ number: 1, status: 'answered', open: false }, { number: 2, status: 'pending', open: true }],
+  questions: [
+    { id: 'q1', text: 'OLD ONE', open: false },
+    { id: 'q2', text: 'OLD TWO', open: true },
+  ],
+  audio: { enabled: true },
+}))
+const m = load()
+check('legacy save migrates without NaN',
+  Number.isFinite(m.displayCap) && Number.isFinite(m.audio.volume) && Number.isFinite(m.currentRound)
+  && m.students[0].ejected === false && Number.isFinite(m.students[0].timesSelected))
+check('legacy open flag -> volunteer mode', m.questions[1].mode === 'volunteer' && m.questions[0].mode === 'students')
+check('legacy text kept, missing slots filled', m.questions[0].text === 'OLD ONE' && m.questions.length === 10
+  && m.questions[9].text === SAMPLE_QUESTIONS[9].text)
+check('legacy rounds padded to ten', m.rounds.length === 10 && m.rounds[0].status === 'answered')
+localStorage.clear()
 
 const failed = results.filter(r => !r.pass)
 for (const r of results) console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}${r.detail?'  — '+r.detail:''}`)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 if (failed.length) process.exitCode = 1
-
-/* --- migration: a session saved by an older build must not produce NaN --- */
-import { load as _load } from '../src/game/state.js'
-const store = {}
-globalThis.localStorage = {
-  getItem: (k) => store[k] ?? null,
-  setItem: (k, v) => { store[k] = v },
-}
-// Simulate an old save: no displayCap, no ejected flag, legacy points field.
-store['noodles.session.v1'] = JSON.stringify({
-  version: 1, currentRound: 3, phase: 'lobby',
-  students: [{ id: 'a', name: 'Ana', colorId: 'lime', points: 4, participated: true }],
-  pool: ['a'], rounds: [], audio: { enabled: true },
-})
-const m = _load()
-const ok = Number.isFinite(m.displayCap) && Number.isFinite(m.audio.volume)
-  && Number.isFinite(m.currentRound) && m.students[0].ejected === false
-  && Number.isFinite(m.students[0].timesSelected)
-console.log(`${ok ? 'PASS' : 'FAIL'}  legacy save migrates without NaN` +
-  `  — displayCap=${m.displayCap} volume=${m.audio.volume} ejected=${m.students[0].ejected}`)
-if (!ok) process.exitCode = 1

@@ -2,22 +2,27 @@
  * Session state: one reducer, persisted to localStorage on every change.
  *
  * Phases:
- *   'lobby'    — crew idle, teacher may spin (or, on a volunteer round, pick)
- *   'spinning' — names cycling, audio scheduled
- *   'caught'   — "IMPOSTOR" banner up
- *   'question' — question on screen, 2:00 countdown running
- *   'ejecting' — the clock ran out; airlock cycling
+ *   'lobby'    — feed idle; host may let the algorithm pick, tap a volunteer,
+ *                or hand a guest question to the guest
+ *   'spinning' — the algorithm is scrolling the feed, audio scheduled
+ *   'caught'   — "THE ALGORITHM CHOSE" banner up
+ *   'question' — question on screen, 2:00 countdown available
+ *   'ejecting' — the clock ran out on a student; they are being logged out
  *
- * Round status: 'pending' | 'answered' | 'ejected'
+ * Round mode (from the question): 'students' | 'guest' | 'volunteer'
+ * Round status: 'pending' | 'answered' | 'ejected' | 'timeup'
+ *   'ejected' — a student was on the clock and got logged out
+ *   'timeup'  — the clock ran out with nobody to log out (guest round, or a
+ *               volunteer round where nobody had been tapped)
  */
 
 import {
   STORAGE_KEY,
   TOTAL_ROUNDS,
+  MODES,
   SAMPLE_STUDENTS,
   SAMPLE_QUESTIONS,
   colorFor,
-  isOpenRound,
 } from './constants'
 import { buildPool, reconcilePool } from './shuffle'
 
@@ -25,7 +30,13 @@ let idSeq = 0
 const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${(idSeq++).toString(36)}`
 
 /** What to show when a name field has been emptied. */
-export const displayName = (s) => (s?.name?.trim() ? s.name.trim() : 'Unnamed crew')
+export const displayName = (s) => (s?.name?.trim() ? s.name.trim() : 'Unnamed student')
+
+const normalizeMode = (mode, legacyOpen) => {
+  if (MODES.includes(mode)) return mode
+  // Sessions saved before modes existed carried a boolean `open` flag.
+  return legacyOpen ? 'volunteer' : 'students'
+}
 
 export function makeStudent(name, index) {
   const c = colorFor(index)
@@ -35,19 +46,28 @@ export function makeStudent(name, index) {
     colorId: c.id,
     participated: false,
     timesSelected: 0,
-    // Ejected crew are out of the craft for good: their seat stays empty and
+    // Logged-out students are off the feed for good: their card is gone and
     // they are no longer in the selection pool. Still listed under Status.
     ejected: false,
   }
 }
 
+function makeQuestions() {
+  return SAMPLE_QUESTIONS.map((q, i) => ({
+    id: `q${i + 1}`,
+    number: i + 1,
+    text: q.text,
+    mode: q.mode,
+  }))
+}
+
 function makeRounds() {
   return Array.from({ length: TOTAL_ROUNDS }, (_, i) => ({
     number: i + 1,
-    open: isOpenRound(i + 1),
-    status: 'pending', // 'pending' | 'answered' | 'ejected'
-    selectedId: null, // who the spin caught (individual rounds)
-    answeredById: null, // who actually answered (either mode)
+    status: 'pending',
+    selectedId: null, // who the algorithm picked
+    answeredById: null, // which student actually answered (volunteer / picked)
+    guestAnswered: false, // guest rounds: the guest took it
     revealed: false,
   }))
 }
@@ -57,30 +77,30 @@ export function initialState() {
   return {
     version: 1,
     students,
-    questions: SAMPLE_QUESTIONS.map((text, i) => ({
-      id: `q${i + 1}`,
-      number: i + 1,
-      text,
-      open: isOpenRound(i + 1),
-    })),
+    questions: makeQuestions(),
     rounds: makeRounds(),
     currentRound: 1,
     pool: buildPool(students.map((s) => s.id)),
     lastDrawn: null,
     phase: 'lobby',
-    spotlightId: null, // crew member currently highlighted by the cycler
-    caughtId: null, // crew member locked in for this round
+    spotlightId: null, // card currently lit by the scrolling algorithm
+    caughtId: null, // student locked in for this round
     audio: { enabled: true, volume: 0.8 },
     reducedMotion: false,
-    // 45 name tags at once is noise. Off by default: the room stays clean and
-    // only the name that matters right now is shown.
-    showNames: false,
-    // How many crew are SEATED in the room. The roster and the pool are
-    // unaffected — a class of 45 still draws from all 45; the lobby just shows
-    // a tidy cast instead of 45 shrunken characters. 0 = show everyone.
+    // Names live on the cards in the feed, so they are on by default; the
+    // toggle remains for a host who wants a cleaner wall.
+    showNames: true,
+    // How many cards are on the feed at once. The roster and the pool are
+    // unaffected — a class of 45 still draws from all 45; the feed just shows
+    // a tidy wall instead of 45 shrunken cards. 0 = show everyone.
     displayCap: 16,
   }
 }
+
+/** The mode of a round comes from its question, so editing the question's
+ *  mode re-labels the round instantly. */
+export const modeOf = (state, roundNumber) =>
+  state.questions[roundNumber - 1]?.mode ?? 'students'
 
 /* ------------------------------------------------------------------ */
 
@@ -91,30 +111,7 @@ export function load() {
     const saved = JSON.parse(raw)
     if (saved.version !== 1 || !Array.isArray(saved.students)) return initialState()
 
-    /* Self-heal: a saved session with ZERO students has nothing worth
-       restoring — it just strands the next visitor on "No crew aboard"
-       with an un-runnable game. Keep what the teacher may genuinely have
-       edited (questions, audio, display settings) and bring the sample
-       crew back so the link always lands on something playable. */
-    if (saved.students.length === 0) {
-      const fresh = initialState()
-      return {
-        ...fresh,
-        questions:
-          Array.isArray(saved.questions) && saved.questions.length
-            ? saved.questions
-            : fresh.questions,
-        audio: saved.audio ?? fresh.audio,
-        reducedMotion: saved.reducedMotion ?? fresh.reducedMotion,
-        showNames: saved.showNames ?? fresh.showNames,
-        displayCap: saved.displayCap ?? fresh.displayCap,
-      }
-    }
-
-    // Never restore mid-animation — a refresh should land in a stable lobby.
-    const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
     const base = initialState()
-    const merged = { ...base, ...saved, phase, spotlightId: null }
 
     /* A session saved by an older build can carry a missing or malformed
        numeric field, which reaches an <input value> as NaN and breaks the
@@ -123,8 +120,40 @@ export function load() {
     const num = (v, fallback, min, max) =>
       typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback
 
+    /* Questions: keep the host's edited text and mode; fill anything missing
+       from the sample deck. The previous build shipped 8 questions — the two
+       new slots pick up the sample prompts. */
+    const questions = makeQuestions().map((q, i) => {
+      const savedQ = Array.isArray(saved.questions) ? saved.questions[i] : null
+      return {
+        ...q,
+        text: typeof savedQ?.text === 'string' ? savedQ.text : q.text,
+        mode: savedQ ? normalizeMode(savedQ.mode, savedQ.open) : q.mode,
+      }
+    })
+
+    /* Self-heal: a saved session with ZERO students has nothing worth
+       restoring — it just strands the next visitor on an empty feed with an
+       un-runnable game. Keep what the host may genuinely have edited
+       (questions, audio, display settings) and bring the sample crew back. */
+    if (saved.students.length === 0) {
+      return {
+        ...base,
+        questions,
+        audio: saved.audio ?? base.audio,
+        reducedMotion: saved.reducedMotion ?? base.reducedMotion,
+        showNames: saved.showNames ?? base.showNames,
+        displayCap: saved.displayCap ?? base.displayCap,
+      }
+    }
+
+    // Never restore mid-animation — a refresh should land in a stable lobby.
+    const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
+    const merged = { ...base, ...saved, phase, spotlightId: null, questions }
+
     merged.displayCap = num(merged.displayCap, base.displayCap, 0, 500)
     merged.currentRound = num(merged.currentRound, 1, 1, TOTAL_ROUNDS)
+    merged.showNames = typeof merged.showNames === 'boolean' ? merged.showNames : true
     merged.audio = {
       enabled: typeof merged.audio?.enabled === 'boolean' ? merged.audio.enabled : true,
       volume: num(merged.audio?.volume, 0.8, 0, 1),
@@ -136,6 +165,22 @@ export function load() {
       participated: Boolean(s?.participated),
       ejected: Boolean(s?.ejected),
     }))
+    merged.rounds = makeRounds().map((baseRound) => {
+      const savedRound = Array.isArray(saved.rounds)
+        ? saved.rounds.find((r) => r.number === baseRound.number)
+        : null
+      const status = ['pending', 'answered', 'ejected', 'timeup'].includes(savedRound?.status)
+        ? savedRound.status
+        : 'pending'
+      return {
+        ...baseRound,
+        status,
+        selectedId: savedRound?.selectedId ?? null,
+        answeredById: savedRound?.answeredById ?? null,
+        guestAnswered: Boolean(savedRound?.guestAnswered),
+        revealed: Boolean(savedRound?.revealed),
+      }
+    })
     merged.pool = Array.isArray(merged.pool) ? merged.pool : []
 
     return merged
@@ -164,7 +209,7 @@ const patchStudent = (state, id, fn) => ({
   students: state.students.map((s) => (s.id === id ? { ...s, ...fn(s) } : s)),
 })
 
-/** Ids of everyone still on the craft — the only people who can be drawn. */
+/** Ids of everyone still on the feed — the only people who can be drawn. */
 const aboard = (students) => students.filter((s) => !s.ejected).map((s) => s.id)
 
 export function reducer(state, action) {
@@ -258,7 +303,7 @@ export function reducer(state, action) {
     }
 
     /** Refill an emptied roster with the sample crew — the on-screen escape
-     *  hatch from "No crew aboard". Questions and settings are untouched. */
+     *  hatch from an empty feed. Questions and settings are untouched. */
     case 'roster/loadSample': {
       const students = SAMPLE_STUDENTS.map(makeStudent)
       return {
@@ -284,15 +329,31 @@ export function reducer(state, action) {
         ),
       }
 
+    /** Who a question is for. Changing it re-labels the round immediately. */
+    case 'question/mode':
+      if (!MODES.includes(action.mode)) return state
+      return {
+        ...state,
+        questions: state.questions.map((q) =>
+          q.id === action.id ? { ...q, mode: action.mode } : q,
+        ),
+      }
+
     /* ---------- selection ---------- */
-    /** A spin (or re-spin) restarts the round: any previous outcome on it is
-     *  void, otherwise a re-spun round drags "EJECTED — TIME UP" and its old
+    /** A pick (or re-pick) restarts the round: any previous outcome on it is
+     *  void, otherwise a re-run round drags "LOGGED OUT — TIME UP" and its old
      *  reveal into the fresh takeover. */
     case 'spin/start':
       return patchRound(
         { ...state, phase: 'spinning', caughtId: null, spotlightId: null },
         state.currentRound,
-        { status: 'pending', revealed: false, selectedId: null, answeredById: null },
+        {
+          status: 'pending',
+          revealed: false,
+          selectedId: null,
+          answeredById: null,
+          guestAnswered: false,
+        },
       )
 
     case 'spin/spotlight':
@@ -303,7 +364,7 @@ export function reducer(state, action) {
      *
      * The draw itself happens in App.spin() rather than here: reducers must be
      * pure, and React StrictMode double-invokes them in development — an RNG
-     * call in this branch would burn two cards off the deck per spin.
+     * call in this branch would burn two cards off the deck per pick.
      */
     case 'spin/commit': {
       const { id, pool } = action
@@ -333,16 +394,21 @@ export function reducer(state, action) {
         revealed: true,
       })
 
-    /** The clock ran out — out of the airlock they go. There is no reprieve. */
+    /** The clock ran out on a student — they are being logged out. */
     case 'round/eject':
       return patchRound({ ...state, phase: 'ejecting' }, state.currentRound, {
         status: 'ejected',
       })
 
+    /** The clock ran out with nobody on it (guest round, or no volunteer
+     *  tapped). Nobody leaves the feed; the round just closes as time up. */
+    case 'round/timeup':
+      return patchRound(state, state.currentRound, { status: 'timeup' })
+
     /**
-     * They have cleared the hull. Mark them off the craft and pull them out of
-     * the pool — an ejected student cannot be drawn again, and their seat
-     * stays empty for the rest of the session.
+     * They have been swiped off the feed. Mark them logged out and pull them
+     * out of the pool — a logged-out student cannot be drawn again, and their
+     * card stays gone for the rest of the session.
      */
     case 'student/eject': {
       if (!action.id) return { ...state, phase: 'question' }
@@ -352,23 +418,30 @@ export function reducer(state, action) {
         phase: 'question',
         pool: next.pool.filter((id) => id !== action.id),
         // caughtId is deliberately kept: the card should still name who went
-        // out. They are no longer drawn in the room, so nothing dangles.
+        // out. They are no longer drawn on the feed, so nothing dangles.
       }
     }
 
     /**
-     * Volunteer rounds: the teacher taps whoever spoke up. This is the only
-     * way a round can end as 'answered' — and only when nobody has been spun
-     * for. Once an impostor is on the clock, nothing cancels the airlock.
+     * Volunteer rounds: the host taps whoever spoke up. Marks the round
+     * answered only when nobody has been picked by the algorithm for it —
+     * once a picked student is on the clock, only the clock decides.
      */
     case 'round/pickAnswerer': {
       const round = state.rounds.find((r) => r.number === state.currentRound)
-      let next = patchRound(state, state.currentRound, {
+      const next = patchRound(state, state.currentRound, {
         answeredById: action.id,
         status: round?.selectedId ? round.status : 'answered',
       })
       return patchStudent(next, action.id, () => ({ participated: true }))
     }
+
+    /** Guest rounds: the guest took the question. */
+    case 'round/guestAnswered':
+      return patchRound(state, state.currentRound, {
+        guestAnswered: true,
+        status: 'answered',
+      })
 
     case 'round/goto': {
       const number = Math.min(TOTAL_ROUNDS, Math.max(1, action.number))
@@ -398,8 +471,11 @@ export function reducer(state, action) {
       return { ...state, showNames: action.value }
 
     /* ---------- reset ---------- */
+    case 'session/replace':
+      return action.state ?? state
+
     case 'session/resetProgress': {
-      // Everyone comes back aboard.
+      // Everyone comes back online.
       const students = state.students.map((s) => ({
         ...s,
         participated: false,

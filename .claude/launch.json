@@ -5,7 +5,15 @@
       "name": "noodles",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 5173
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "onam-quiz",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "npx vite onam-quiz --port \"${PORT:-8643}\""],
+      "port": 8643,
+      "autoPort": true
     }
   ]
 }

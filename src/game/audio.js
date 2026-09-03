@@ -7,8 +7,13 @@
  * has tens of milliseconds of unpredictable latency and cannot be scheduled.
  *
  * Autoplay policy is handled by construction: the AudioContext is only created
- * and resumed inside the click handler for the teacher's Spin button, which is
- * a genuine user gesture. Nothing plays before that.
+ * and resumed inside a click handler on the host's controls, which is a
+ * genuine user gesture. Nothing plays before that.
+ *
+ * Everything except the licensed sting is synthesised here, on theme: the
+ * scroll is scored with a dial-up modem handshake (the sound of the older
+ * generation getting online), the ticks are notification pings, guests get a
+ * "verified" chime, and a logout is a descending three-tone.
  */
 
 import { TIMING } from './constants'
@@ -109,57 +114,84 @@ class AudioEngine {
     this.active = []
   }
 
-  /**
-   * Original synthesised riser that covers the name-cycling phase, so there is
-   * audio the instant the teacher presses the button (as the brief requires)
-   * without burning the sting's impact early.
-   *
-   * A sawtooth sweeping upward through a resonant low-pass, plus a tick per
-   * highlight step.
-   */
-  playRiser(durationMs) {
-    if (!this.ctx || !this.enabled) return
-    const t0 = this.ctx.currentTime
-    const dur = durationMs / 1000
+  /** One enveloped oscillator note. Returns nothing; tracked for stopAll. */
+  _note({ type = 'sine', freq, at = 0, dur = 0.2, gain = 0.1, glideTo = null }) {
+    const t0 = this.ctx.currentTime + at
+    const osc = this.ctx.createOscillator()
+    osc.type = type
+    osc.frequency.setValueAtTime(freq, t0)
+    if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t0 + dur)
+    const g = this.ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t0)
+    g.gain.exponentialRampToValueAtTime(gain, t0 + Math.min(0.02, dur / 4))
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
+    osc.connect(g).connect(this.master)
+    osc.start(t0)
+    osc.stop(t0 + dur + 0.02)
+    this._track(osc)
+  }
 
+  /**
+   * The scroll bed: a dial-up modem handshake. Two dial tones, a burst of
+   * answer-tone chirps, then a rising carrier sweep through a resonant filter
+   * that peaks right as the feed locks in. Original, synthesised, and exactly
+   * on topic for a talk about digital generations.
+   */
+  playModem(durationMs) {
+    if (!this.ctx || !this.enabled) return
+    const dur = durationMs / 1000
+    const t0 = this.ctx.currentTime
+
+    // Dial tones: DTMF-ish pairs.
+    ;[
+      [697, 1209],
+      [770, 1336],
+      [852, 1477],
+    ].forEach(([a, b], i) => {
+      this._note({ freq: a, at: i * 0.11, dur: 0.09, gain: 0.05 })
+      this._note({ freq: b, at: i * 0.11, dur: 0.09, gain: 0.05 })
+    })
+
+    // Answer tone + chirps.
+    this._note({ freq: 2100, at: 0.42, dur: 0.35, gain: 0.045 })
+    for (let i = 0; i < 6; i++) {
+      this._note({
+        type: 'square',
+        freq: 1200 + (i % 2) * 1000,
+        at: 0.8 + i * 0.07,
+        dur: 0.05,
+        gain: 0.03,
+      })
+    }
+
+    // Carrier sweep: the "connecting" hiss-and-rise that fills the scroll.
     const osc = this.ctx.createOscillator()
     osc.type = 'sawtooth'
-    osc.frequency.setValueAtTime(70, t0)
-    osc.frequency.exponentialRampToValueAtTime(420, t0 + dur)
+    osc.frequency.setValueAtTime(90, t0 + 1.1)
+    osc.frequency.exponentialRampToValueAtTime(520, t0 + dur)
 
     const filter = this.ctx.createBiquadFilter()
-    filter.type = 'lowpass'
-    filter.Q.value = 9
-    filter.frequency.setValueAtTime(200, t0)
-    filter.frequency.exponentialRampToValueAtTime(2600, t0 + dur)
+    filter.type = 'bandpass'
+    filter.Q.value = 6
+    filter.frequency.setValueAtTime(300, t0 + 1.1)
+    filter.frequency.exponentialRampToValueAtTime(3200, t0 + dur)
 
     const gain = this.ctx.createGain()
-    gain.gain.setValueAtTime(0.0001, t0)
-    gain.gain.exponentialRampToValueAtTime(0.16, t0 + dur * 0.85)
+    gain.gain.setValueAtTime(0.0001, t0 + 1.1)
+    gain.gain.exponentialRampToValueAtTime(0.14, t0 + dur * 0.85)
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
 
     osc.connect(filter).connect(gain).connect(this.master)
-    osc.start(t0)
+    osc.start(t0 + 1.1)
     osc.stop(t0 + dur + 0.05)
     this._track(osc)
   }
 
-  /** Short blip fired on each name highlight during the spin. */
-  tick(strength = 1) {
+  /** Notification ping, fired on each card the algorithm lights up. */
+  ping(strength = 1) {
     if (!this.ctx || !this.enabled) return
-    const t0 = this.ctx.currentTime
-    const osc = this.ctx.createOscillator()
-    osc.type = 'square'
-    osc.frequency.setValueAtTime(880 + 260 * strength, t0)
-
-    const gain = this.ctx.createGain()
-    gain.gain.setValueAtTime(0.05 * strength, t0)
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045)
-
-    osc.connect(gain).connect(this.master)
-    osc.start(t0)
-    osc.stop(t0 + 0.06)
-    this._track(osc)
+    this._note({ type: 'sine', freq: 1320 + 380 * strength, dur: 0.07, gain: 0.05 * strength })
+    this._note({ type: 'sine', freq: 1980 + 380 * strength, at: 0.01, dur: 0.05, gain: 0.025 * strength })
   }
 
   /**
@@ -193,24 +225,29 @@ class AudioEngine {
     g.exponentialRampToValueAtTime(0.0001, t + durationMs / 1000)
   }
 
-  /** Warm, non-alarming chime for awarding a participation point. */
+  /** Warm rising chime — a volunteer stepped up, or a guest took the floor. */
   chime() {
     if (!this.ctx || !this.enabled) return
-    const t0 = this.ctx.currentTime
-    ;[523.25, 659.25, 783.99].forEach((f, i) => {
-      const osc = this.ctx.createOscillator()
-      osc.type = 'triangle'
-      osc.frequency.value = f
-      const gain = this.ctx.createGain()
-      const start = t0 + i * 0.07
-      gain.gain.setValueAtTime(0.0001, start)
-      gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.42)
-      osc.connect(gain).connect(this.master)
-      osc.start(start)
-      osc.stop(start + 0.45)
-      this._track(osc)
-    })
+    ;[523.25, 659.25, 783.99].forEach((f, i) =>
+      this._note({ type: 'triangle', freq: f, at: i * 0.07, dur: 0.42, gain: 0.12 }),
+    )
+  }
+
+  /** "Verified" — the two-note badge sound when a guest round opens. */
+  verified() {
+    if (!this.ctx || !this.enabled) return
+    this._note({ type: 'sine', freq: 880, dur: 0.16, gain: 0.1 })
+    this._note({ type: 'sine', freq: 1318.5, at: 0.14, dur: 0.34, gain: 0.12 })
+    this._note({ type: 'triangle', freq: 1760, at: 0.14, dur: 0.3, gain: 0.03 })
+  }
+
+  /** Logout / signal lost — descending three-tone, the opposite of a boot-up. */
+  logout() {
+    if (!this.ctx || !this.enabled) return
+    ;[880, 659.25, 440].forEach((f, i) =>
+      this._note({ type: 'square', freq: f, at: i * 0.16, dur: 0.22, gain: 0.06 }),
+    )
+    this._note({ type: 'sawtooth', freq: 220, at: 0.5, dur: 0.6, gain: 0.05, glideTo: 60 })
   }
 }
 

@@ -1,23 +1,23 @@
 import { useState } from 'react'
-import { CREW_COLORS, TOTAL_ROUNDS } from '../game/constants'
-import { displayName } from '../game/state'
+import { CREW_COLORS, TOTAL_ROUNDS, MODES, MODE_LABEL, MODE_COPY, SESSION } from '../game/constants'
+import { displayName, modeOf } from '../game/state'
 
 /**
- * The teacher's rail. Four tabs so the lobby keeps the screen:
+ * The host's rail. Four tabs so the feed keeps the screen:
  *   Control · Roster · Questions · Status
  */
 export default function TeacherPanel({ state, dispatch, actions, clock }) {
   const [tab, setTab] = useState('control')
 
   return (
-    <aside className="panel" aria-label="Teacher controls">
+    <aside className="panel" aria-label="Host controls">
       <div className="panel-brand">
         <span className="panel-logo" aria-hidden="true">
           <NoodleMark />
         </span>
         <span>
           <strong>NOODLES</strong>
-          <em>crew selection</em>
+          <em>{SESSION.title}</em>
         </span>
       </div>
 
@@ -54,12 +54,26 @@ export default function TeacherPanel({ state, dispatch, actions, clock }) {
 
 /* ================================================================= */
 
+const HERO_LABEL = {
+  students: (round) => (round.selectedId ? 'ALGORITHM, CHOOSE AGAIN' : 'LET THE ALGORITHM CHOOSE'),
+  guest: () => 'NO GUEST? ALGORITHM PICKS',
+  volunteer: () => 'NOBODY? ALGORITHM PICKS',
+}
+
 function ControlTab({ state, dispatch, actions, clock }) {
   const round = state.rounds.find((r) => r.number === state.currentRound)
   const question = state.questions[state.currentRound - 1]
-  const busy = state.phase === 'spinning'
+  const mode = modeOf(state, state.currentRound)
+  const busy = state.phase === 'spinning' || state.phase === 'ejecting'
   const remaining = state.pool.length
   const eligible = state.students.filter((s) => !s.ejected).length
+
+  // Who is on the clock, for the countdown label.
+  const onClock = round.selectedId
+    ? 'the picked student'
+    : mode === 'volunteer' && round.answeredById
+      ? 'the volunteer'
+      : null
 
   return (
     <>
@@ -87,85 +101,100 @@ function ControlTab({ state, dispatch, actions, clock }) {
       </div>
 
       <ol className="round-dots" aria-label="Round progress">
-        {state.rounds.map((r) => (
-          <li key={r.number}>
-            <button
-              className={[
-                'dot',
-                `dot--${r.status}`,
-                r.number === state.currentRound && 'dot--now',
-                r.open && 'dot--open',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => dispatch({ type: 'round/goto', number: r.number })}
-              disabled={busy}
-              title={`Round ${r.number} — ${r.open ? 'open' : 'random'} — ${r.status}`}
-              aria-label={`Go to round ${r.number}, ${r.status}`}
-            >
-              {r.number}
-            </button>
-          </li>
-        ))}
+        {state.rounds.map((r) => {
+          const m = modeOf(state, r.number)
+          return (
+            <li key={r.number}>
+              <button
+                className={[
+                  'dot',
+                  `dot--${r.status}`,
+                  `dot--${m}`,
+                  r.number === state.currentRound && 'dot--now',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => dispatch({ type: 'round/goto', number: r.number })}
+                disabled={busy}
+                title={`Round ${r.number} — ${MODE_LABEL[m]} — ${r.status}`}
+                aria-label={`Go to round ${r.number}, ${MODE_LABEL[m]}, ${r.status}`}
+              >
+                {r.number}
+              </button>
+            </li>
+          )
+        })}
       </ol>
 
-      <div className="card">
-        <span className="card-label">
-          {round.open ? 'Open question' : 'Individual challenge'}
-        </span>
+      <div className={`card card--${mode}`}>
+        <span className="card-label">{MODE_COPY[mode].card}</span>
         <p className="card-q">
           {round.revealed ? question?.text : '••••••  hidden until revealed  ••••••'}
         </p>
       </div>
 
-      {round.open && (
-        <div className="open-note">
-          <strong>VOLUNTEER ROUND</strong>
-          <span>Tap the crew member who answered — or spin if nobody volunteers.</span>
+      {mode === 'guest' && (
+        <div className="open-note open-note--guest">
+          <strong>✓ GUEST QUESTION</strong>
+          <span>
+            Reveal, then hand it to the guest and start the clock. No guest in the room?
+            Let the algorithm pick a student instead.
+          </span>
         </div>
       )}
 
-      <button
-        className="btn btn--hero"
-        onClick={actions.spin}
-        disabled={busy || eligible === 0}
-      >
-        {busy
-          ? 'SELECTING…'
-          : round.open
-            ? 'NO VOLUNTEERS? SPIN'
-            : round.selectedId
-              ? 'RE-SPIN'
-              : 'SELECT RANDOM STUDENT'}
+      {mode === 'volunteer' && (
+        <div className="open-note">
+          <strong>✋ VOLUNTEER ROUND</strong>
+          <span>Tap the card of whoever answered — or let the algorithm pick if nobody does.</span>
+        </div>
+      )}
+
+      <button className="btn btn--hero" onClick={actions.spin} disabled={busy || eligible === 0}>
+        {busy ? 'SCROLLING…' : HERO_LABEL[mode](round)}
         <kbd>S</kbd>
       </button>
       <p className="pool-line">
-        Pool: <strong>{remaining}</strong> of {eligible} aboard
-        {state.students.length !== eligible &&
-          ` · ${state.students.length - eligible} ejected`}
+        Pool: <strong>{remaining}</strong> of {eligible} online
+        {state.students.length !== eligible && ` · ${state.students.length - eligible} logged out`}
       </p>
 
       <button
         className="btn btn--reveal"
-        onClick={() => dispatch({ type: 'round/reveal' })}
+        onClick={actions.reveal}
         disabled={
-          round.revealed || busy || (!round.open && !round.selectedId) || state.phase === 'caught'
+          round.revealed ||
+          busy ||
+          (mode === 'students' && !round.selectedId) ||
+          state.phase === 'caught'
         }
       >
         Reveal Question <kbd>R</kbd>
       </button>
 
-      {/* Clock: the teacher decides when the two minutes begin. */}
-      {round.selectedId && round.revealed && round.status !== 'answered' && (
+      {mode === 'guest' && (
+        <button
+          className="btn btn--good"
+          onClick={actions.guestAnswered}
+          disabled={!round.revealed || round.status !== 'pending' || busy}
+        >
+          ✓ Guest answered <kbd>G</kbd>
+        </button>
+      )}
+
+      {/* Clock: the host decides when the two minutes begin — on every mode. */}
+      {round.revealed && round.status === 'pending' && (
         <div className="clock-controls">
           <span className="clock-controls-label">
             {clock.running
-              ? `Counting down — ${fmt(clock.secondsLeft)} to ejection`
+              ? `Counting down — ${fmt(clock.secondsLeft)} ${onClock ? 'to logout' : 'until time up'}`
               : 'Clock not started'}
           </span>
           {clock.running ? (
             <p className="hint">
-              No pause, no extension. At zero the airlock cycles.
+              {onClock
+                ? `No pause, no extension. At zero ${onClock} is logged out.`
+                : 'No pause, no extension. At zero the round closes as time up.'}
             </p>
           ) : (
             <button className="btn btn--hero" onClick={clock.start}>
@@ -178,17 +207,23 @@ function ControlTab({ state, dispatch, actions, clock }) {
       {round.revealed && (
         <p className="pool-line">
           {round.status === 'ejected'
-            ? 'Time ran out — the impostor was ejected to space.'
-            : round.status === 'answered'
-              ? 'Answered by a volunteer. Move to the next round.'
-              : round.selectedId
-                ? 'Question is on screen. Start the clock when ready.'
-                : 'Volunteer round — tap whoever answered.'}
+            ? 'Time ran out — the student on the clock was logged out.'
+            : round.status === 'timeup'
+              ? 'Time ran out. Nobody was logged out — move to the next round.'
+              : round.status === 'answered'
+                ? round.guestAnswered
+                  ? 'Answered by the guest. Move to the next round.'
+                  : 'Answered by a volunteer. Move to the next round.'
+                : round.selectedId
+                  ? 'Question is on screen. Start the clock when ready.'
+                  : mode === 'guest'
+                    ? 'Over to the guest. Start the clock, then mark Guest answered.'
+                    : 'Volunteer round — tap whoever answered, or start the clock.'}
         </p>
       )}
 
-      {/* At-a-glance counters, so the teacher never has to leave Control to
-          know where the session stands. */}
+      {/* At-a-glance counters, so the host never has to leave Control to know
+          where the session stands. */}
       <div className="mini-stats">
         <div className="mini">
           <strong>{state.rounds.filter((r) => r.status !== 'pending').length}</strong>
@@ -200,7 +235,7 @@ function ControlTab({ state, dispatch, actions, clock }) {
         </div>
         <div className="mini mini--bad">
           <strong>{state.students.length - eligible}</strong>
-          <span>Ejected</span>
+          <span>Logged out</span>
         </div>
       </div>
 
@@ -236,14 +271,14 @@ function ControlTab({ state, dispatch, actions, clock }) {
             checked={state.showNames}
             onChange={(e) => dispatch({ type: 'names/set', value: e.target.checked })}
           />
-          <span>Show all names</span>
+          <span>Show names on cards</span>
         </label>
 
-        {/* Seats in the room. Selection always uses the FULL roster — this only
-            controls how many characters are drawn, so a big class doesn't turn
-            the lobby into a crowd of smudges. */}
+        {/* Cards on the feed. Selection always uses the FULL roster — this only
+            controls how many cards are drawn, so a big class doesn't turn the
+            feed into a wall of thumbnails. */}
         <label className="slider">
-          <span>Crew shown</span>
+          <span>Cards shown</span>
           <input
             type="range"
             min="6"
@@ -313,7 +348,7 @@ function RosterTab({ state, dispatch }) {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Add crew member…"
+          placeholder="Add a student…"
           aria-label="New student name"
           maxLength={22}
         />
@@ -349,12 +384,15 @@ function RosterTab({ state, dispatch }) {
               setShowBulk(false)
             }}
           >
-            Load {bulkCount} crew
+            Load {bulkCount} students
           </button>
         </div>
       )}
 
-      <p className="hint">{state.students.length} aboard</p>
+      <p className="hint">
+        {state.students.length} in the roster · new students join the pool immediately, and
+        the algorithm never repeats anyone until everyone has had a turn.
+      </p>
 
       <ul className="roster">
         {state.students.map((s) => (
@@ -365,7 +403,7 @@ function RosterTab({ state, dispatch }) {
               onChange={(e) =>
                 dispatch({ type: 'student/color', id: s.id, colorId: e.target.value })
               }
-              aria-label={`Suit colour for ${s.name}`}
+              aria-label={`Avatar colour for ${s.name}`}
               style={{
                 '--sw': CREW_COLORS.find((c) => c.id === s.colorId)?.base ?? '#888',
               }}
@@ -382,7 +420,11 @@ function RosterTab({ state, dispatch }) {
               aria-label={`Name for ${s.name}`}
               maxLength={22}
             />
-            {s.participated && <span className="chip chip--done">done</span>}
+            {s.ejected ? (
+              <span className="chip chip--out">out</span>
+            ) : (
+              s.participated && <span className="chip chip--done">done</span>
+            )}
             <button
               className="icon-btn"
               onClick={() => dispatch({ type: 'student/remove', id: s.id })}
@@ -404,22 +446,37 @@ function QuestionsTab({ state, dispatch }) {
   return (
     <>
       <p className="hint">
-        Rounds <strong>2, 4, 7, 9, 10</strong> are volunteer rounds — anyone may answer.
-        The rest pick one crew member at random.
+        <strong>Students</strong> — the algorithm picks one. <strong>Guest</strong> — for the
+        guest speaker, no pick (with an algorithm fallback). <strong>Volunteer</strong> — anyone
+        may answer; tap who did. Change any question's audience below.
       </p>
       <ul className="qlist">
         {state.questions.map((q) => (
-          <li key={q.id} className={`qrow${q.open ? ' qrow--open' : ''}`}>
+          <li key={q.id} className={`qrow qrow--${q.mode}`}>
             <span className="qnum">
               {q.number}
-              {q.open && <em>open</em>}
+              <em>{MODE_LABEL[q.mode]}</em>
             </span>
-            <textarea
-              value={q.text}
-              onChange={(e) => dispatch({ type: 'question/edit', id: q.id, text: e.target.value })}
-              aria-label={`Question ${q.number}`}
-              rows={3}
-            />
+            <div className="qbody">
+              <select
+                className="qmode"
+                value={q.mode}
+                onChange={(e) => dispatch({ type: 'question/mode', id: q.id, mode: e.target.value })}
+                aria-label={`Who answers question ${q.number}`}
+              >
+                {MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {MODE_LABEL[m]}
+                  </option>
+                ))}
+              </select>
+              <textarea
+                value={q.text}
+                onChange={(e) => dispatch({ type: 'question/edit', id: q.id, text: e.target.value })}
+                aria-label={`Question ${q.number}`}
+                rows={3}
+              />
+            </div>
           </li>
         ))}
       </ul>
@@ -432,22 +489,24 @@ function QuestionsTab({ state, dispatch }) {
 function StatusTab({ state }) {
   const roster = [...state.students].sort((a, b) => a.name.localeCompare(b.name))
   const answered = state.rounds.filter((r) => r.status === 'answered').length
+  const timeUp = state.rounds.filter((r) => r.status === 'timeup').length
   const ejected = state.students.filter((s) => s.ejected).length
   const participated = state.students.filter((s) => s.participated).length
-  const aboard = state.students.length - ejected
+  const online = state.students.length - ejected
 
   return (
     <>
       <div className="stats">
         <Stat label="Round" value={`${state.currentRound}/${TOTAL_ROUNDS}`} />
-        <Stat label="Aboard" value={aboard} tone="good" />
-        <Stat label="Ejected" value={ejected} tone="bad" />
+        <Stat label="Online" value={online} tone="good" />
+        <Stat label="Logged out" value={ejected} tone="bad" />
         <Stat label="Answered" value={answered} />
+        <Stat label="Time up" value={timeUp} tone="warn" />
         <Stat label="Took part" value={`${participated}/${state.students.length}`} />
         <Stat label="In pool" value={state.pool.length} tone="cool" />
       </div>
 
-      <h3 className="sub">Crew</h3>
+      <h3 className="sub">Students</h3>
       <ul className="scores">
         {roster.map((s) => (
           <li key={s.id} className={s.ejected ? 'is-ejected' : undefined}>
@@ -457,7 +516,7 @@ function StatusTab({ state }) {
             />
             <span className="score-name">{displayName(s)}</span>
             {s.ejected ? (
-              <span className="chip chip--out">⏻ ejected</span>
+              <span className="chip chip--out">⏻ logged out</span>
             ) : s.participated ? (
               <span className="chip chip--done">✓ took part</span>
             ) : (
@@ -471,13 +530,15 @@ function StatusTab({ state }) {
       <h3 className="sub">Rounds</h3>
       <ul className="rounds-log">
         {state.rounds.map((r) => {
+          const m = modeOf(state, r.number)
           const who = state.students.find((s) => s.id === (r.answeredById ?? r.selectedId))
+          const whoLabel = r.guestAnswered ? 'Guest' : who ? displayName(who) : '—'
           return (
             <li key={r.number} className={`log log--${r.status}`}>
               <span className="log-n">{r.number}</span>
-              <span className="log-mode">{r.open ? 'open' : 'random'}</span>
-              <span className="log-who">{who ? displayName(who) : '—'}</span>
-              <span className="log-st">{r.status}</span>
+              <span className={`log-mode log-mode--${m}`}>{MODE_LABEL[m]}</span>
+              <span className="log-who">{whoLabel}</span>
+              <span className="log-st">{r.status === 'timeup' ? 'time up' : r.status}</span>
             </li>
           )
         })}

@@ -1,36 +1,38 @@
 /**
- * Full-stage overlays: the catch banner, the open-question call, and the
+ * Full-stage overlays: the pick banner, the guest/volunteer call, and the
  * question card. All sized for a classroom projector.
  */
 
+import { TOTAL_ROUNDS, SESSION } from '../game/constants'
+
 export function CaughtBanner({ name, visible }) {
   return (
-    <div
-      className={`banner${visible ? ' banner--in' : ''}`}
-      role="status"
-      aria-live="assertive"
-    >
+    <div className={`banner${visible ? ' banner--in' : ''}`} role="status" aria-live="assertive">
       <div className="banner-inner">
-        <span className="banner-kicker">⚠ AIRLOCK CYCLE INITIATED</span>
-        <span className="banner-title">IMPOSTOR</span>
+        <span className="banner-kicker">🔔 New notification</span>
+        <span className="banner-title">THE ALGORITHM CHOSE</span>
         <span className="banner-name">{name}</span>
       </div>
     </div>
   )
 }
 
-export function OpenBanner({ visible }) {
+/** Guest and volunteer rounds open with a call to the room instead of a pick. */
+export function ModeBanner({ mode, visible }) {
+  const guest = mode === 'guest'
   return (
     <div
-      className={`banner banner--open${visible ? ' banner--in' : ''}`}
+      className={`banner banner--open banner--${mode}${visible ? ' banner--in' : ''}`}
       role="status"
       aria-live="polite"
     >
       <div className="banner-inner">
-        <span className="banner-kicker">✦ ALL HANDS</span>
-        <span className="banner-title">OPEN QUESTION</span>
-        <span className="banner-name">ANYONE MAY ANSWER</span>
-        <span className="banner-sub">Volunteers — raise a hand</span>
+        <span className="banner-kicker">{guest ? '✓ Verified' : '✋ All hands'}</span>
+        <span className="banner-title">{guest ? 'GUEST QUESTION' : 'RAISE YOUR HAND'}</span>
+        <span className="banner-name">{guest ? 'OVER TO OUR GUEST' : 'ANYONE MAY ANSWER'}</span>
+        <span className="banner-sub">
+          {guest ? 'No guest in the room? Let the algorithm pick' : 'Host taps whoever speaks up'}
+        </span>
       </div>
     </div>
   )
@@ -40,12 +42,12 @@ export function OpenBanner({ visible }) {
  * End of session. Appears once every round has an outcome — otherwise a class
  * finishes round 10 and the screen just sits there with nothing to say.
  */
-export function SessionSummary({ ejected, answered, aboard, total, onRestart, onDismiss }) {
+export function SessionSummary({ ejected, answered, timeUp, aboard, total, onRestart, onDismiss }) {
   return (
     <section className="summary" role="dialog" aria-modal="true" aria-label="Session complete">
       <div className="summary-inner">
-        <p className="summary-kicker">✦ All ten rounds complete</p>
-        <h1 className="summary-title">MISSION COMPLETE</h1>
+        <p className="summary-kicker">✦ All {TOTAL_ROUNDS} rounds complete · {SESSION.title}</p>
+        <h1 className="summary-title">SESSION COMPLETE</h1>
 
         <div className="summary-stats">
           <div className="sstat">
@@ -54,20 +56,26 @@ export function SessionSummary({ ejected, answered, aboard, total, onRestart, on
           </div>
           <div className="sstat sstat--bad">
             <strong>{ejected.length}</strong>
-            <span>Ejected</span>
+            <span>Logged out</span>
           </div>
+          {timeUp > 0 && (
+            <div className="sstat sstat--warn">
+              <strong>{timeUp}</strong>
+              <span>Time up</span>
+            </div>
+          )}
           <div className="sstat sstat--good">
             <strong>
               {aboard}
               <i>/{total}</i>
             </strong>
-            <span>Still aboard</span>
+            <span>Still online</span>
           </div>
         </div>
 
         {ejected.length > 0 && (
           <div className="summary-list">
-            <h2>Lost to space</h2>
+            <h2>Logged out</h2>
             <ul>
               {ejected.map((n) => (
                 <li key={n}>{n}</li>
@@ -89,8 +97,16 @@ export function SessionSummary({ ejected, answered, aboard, total, onRestart, on
   )
 }
 
+const statusLabel = (status, round) => {
+  if (status === 'answered') return round?.guestAnswered ? '✓ Guest answered' : '✓ Answered in time'
+  if (status === 'ejected') return '⏻ Logged out — time up'
+  if (status === 'timeup') return '⏱ Time up'
+  return null
+}
+
 export function QuestionCard({
   round,
+  mode,
   question,
   status,
   challengerName,
@@ -101,27 +117,29 @@ export function QuestionCard({
   totalSeconds,
   ejecting,
   onStart,
+  onGuestAnswered,
 }) {
-  /* Once somebody has been caught, the name and the question take the whole
+  const label = statusLabel(status, round)
+  const clockIdle = timeLeft == null && status === 'pending'
+
+  /* Once somebody has been picked, the name and the question take the whole
      stage — this is what the class is reading from the back of the room.
-     Volunteer rounds keep the compact bottom card so the teacher can still see
-     the lobby and tap whoever answered. */
+     Guest and volunteer rounds keep the compact bottom card so the host can
+     still see the feed and tap whoever answered. */
   if (challengerName) {
     return (
       <section className="takeover" aria-live="polite">
         <div className="takeover-inner">
           <p className="takeover-kicker">
-            <span>⚠ Impostor identified</span>
-            <span className="takeover-round">Round {round.number} / 10</span>
+            <span>🔔 The algorithm chose</span>
+            <span className="takeover-round">
+              Round {round.number} / {TOTAL_ROUNDS}
+            </span>
           </p>
 
           <h1 className="takeover-name">{challengerName}</h1>
 
-          {status !== 'pending' && (
-            <span className={`qcard-status qcard-status--${status}`}>
-              {status === 'answered' ? '✓ Answered in time' : '⏻ Ejected — time up'}
-            </span>
-          )}
+          {label && <span className={`qcard-status qcard-status--${status}`}>{label}</span>}
 
           <p className="takeover-question">{question?.text || '(no question set)'}</p>
 
@@ -131,18 +149,19 @@ export function QuestionCard({
               total={totalSeconds}
               running={running}
               ejecting={ejecting}
-              done={status === 'ejected'}
+              done={status === 'ejected' || status === 'timeup'}
+              doneLabel={status === 'ejected' ? 'LOGGED OUT — TIME UP' : 'TIME UP'}
               big
             />
           )}
 
           <div className="takeover-actions">
-            {timeLeft == null && status === 'pending' && (
+            {clockIdle && (
               <button className="btn btn--hero" onClick={onStart}>
                 ▶ Start 2:00 <kbd>Space</kbd>
               </button>
             )}
-            {status === 'ejected' && (
+            {(status === 'ejected' || status === 'timeup') && (
               <button className="btn btn--warn" onClick={onStart}>
                 ↻ Another 2:00
               </button>
@@ -153,42 +172,72 @@ export function QuestionCard({
     )
   }
 
+  const guest = mode === 'guest'
+
   return (
-    <section className="qcard" aria-live="polite">
+    <section className={`qcard qcard--${mode}`} aria-live="polite">
       <header className="qcard-head">
         <span className="qcard-round">
-          Round {round.number} / 10 {round.open && <em>· volunteer round</em>}
+          Round {round.number} / {TOTAL_ROUNDS}{' '}
+          <em>· {guest ? 'guest question' : mode === 'volunteer' ? 'volunteer round' : 'student question'}</em>
         </span>
-        {status !== 'pending' && (
-          <span className={`qcard-status qcard-status--${status}`}>
-            {status === 'answered' ? '✓ Answered in time' : '⏻ Ejected — time up'}
-          </span>
-        )}
+        {label && <span className={`qcard-status qcard-status--${status}`}>{label}</span>}
       </header>
 
       <p className="qcard-text">{question?.text || '(no question set)'}</p>
 
-      {round.open && (
-        <p className="qcard-hint">
-          {answererName ? (
-            <>
-              Answering: <strong>{answererName}</strong>
-            </>
-          ) : pickMode ? (
-            <>Tap a crew member in the lobby to record who answered.</>
-          ) : null}
-        </p>
+      <p className="qcard-hint">
+        {guest ? (
+          round.guestAnswered ? (
+            <>Answered by our <strong>guest</strong>.</>
+          ) : (
+            <>Over to the <strong>guest speaker</strong>. No guest here? Let the algorithm pick.</>
+          )
+        ) : answererName ? (
+          <>
+            Answering: <strong>{answererName}</strong>
+          </>
+        ) : pickMode ? (
+          <>Tap a card on the feed to record who answered.</>
+        ) : null}
+      </p>
+
+      {/* The clock runs on every question type. On a guest round nobody can be
+          logged out, so at zero it simply reads TIME UP. */}
+      {timeLeft != null && (
+        <Countdown
+          seconds={timeLeft}
+          total={totalSeconds}
+          running={running}
+          ejecting={ejecting}
+          done={status === 'ejected' || status === 'timeup'}
+          doneLabel={status === 'ejected' ? 'LOGGED OUT — TIME UP' : 'TIME UP'}
+        />
       )}
 
-      {/* No clock here: a volunteer round with nobody caught is untimed. The
-          moment a name is drawn, the full-stage takeover above owns the round
-          instead. */}
+      <div className="qcard-actions">
+        {clockIdle && (
+          <button className="btn btn--hero" onClick={onStart}>
+            ▶ Start 2:00 <kbd>Space</kbd>
+          </button>
+        )}
+        {guest && status === 'pending' && (
+          <button className="btn btn--good" onClick={onGuestAnswered}>
+            ✓ Guest answered
+          </button>
+        )}
+        {(status === 'ejected' || status === 'timeup') && (
+          <button className="btn btn--warn" onClick={onStart}>
+            ↻ Another 2:00
+          </button>
+        )}
+      </div>
     </section>
   )
 }
 
 /** MM:SS countdown with a draining bar. Turns amber under 30s, red under 10s. */
-function Countdown({ seconds, total, running, ejecting, done, big }) {
+function Countdown({ seconds, total, running, ejecting, done, doneLabel, big }) {
   const spent = ejecting || done
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
@@ -196,9 +245,9 @@ function Countdown({ seconds, total, running, ejecting, done, big }) {
   const tone = spent || seconds <= 10 ? 'crit' : seconds <= 30 ? 'warn' : 'ok'
 
   const label = ejecting
-    ? 'AIRLOCK CYCLING'
+    ? 'LOGGING OUT'
     : done
-      ? 'EJECTED — TIME UP'
+      ? doneLabel
       : running
         ? 'TIME TO ANSWER'
         : 'READY'

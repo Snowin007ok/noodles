@@ -1,21 +1,15 @@
-import LobbyRoom from './LobbyRoom'
+import FeedFrame from './FeedFrame'
 import CrewMember from './CrewMember'
-import { seatFor, crewScale, seatPitch, castFor, AIRLOCK } from '../game/layout'
+import { feedLayout, castFor, SWIPE_OUT } from '../game/layout'
 import { CREW_COLORS } from '../game/constants'
 import { displayName } from '../game/state'
 
 const colorById = (id) => CREW_COLORS.find((c) => c.id === id) ?? CREW_COLORS[0]
 
 /**
- * The stage: the room SVG with every crew member positioned over it.
+ * The stage: the "For You" feed with every student as a profile card.
  *
- * Art and name tags live in TWO separate layers. Each crew node carries a
- * transform (for the bob and the launch), and a transform creates a stacking
- * context — so a name nested inside its own crew node can never draw above a
- * neighbour's artwork. Hoisting the tags into their own layer guarantees every
- * name stays legible no matter how tightly the room is packed.
- *
- * `pickMode` turns the tags into real <button>s so the teacher can tap whoever
+ * `pickMode` turns the cards into real <button>s so the host can tap whoever
  * answered a volunteer question — keyboard and touch both work.
  */
 export default function Lobby({
@@ -23,8 +17,8 @@ export default function Lobby({
   spotlightId,
   caughtId,
   phase,
+  mode,
   alarm,
-  airlockOpen,
   launching,
   pickMode,
   showNames,
@@ -33,181 +27,100 @@ export default function Lobby({
   onPick,
   onLoadSample,
 }) {
-  // The room seats a cast, not the whole roster — everyone still draws from the
-  // full pool. Whoever is spotlit, caught or answering is forced on deck so a
-  // selection is never invisible.
+  // The feed shows a cast, not the whole roster — everyone still draws from
+  // the full pool. Whoever is lit, picked or answering is forced onto the
+  // feed so a selection is never invisible.
   const cast = castFor(students, displayCap, [spotlightId, caughtId, answeredById])
-  const aboardCount = students.filter((s) => !s.ejected).length
-  const offDeck = aboardCount - cast.length
+  const onlineCount = students.filter((s) => !s.ejected).length
+  const offFeed = onlineCount - cast.length
+  const grid = feedLayout(cast.length)
 
-  /* The "gotcha" beat. When the spin locks in we need the caught crew
-     member's seat so the spotlight, shockwave and sparks can all originate
-     from exactly where they're standing. */
+  /* The "gotcha" beat. When the algorithm locks in we need the picked card's
+     centre so the spotlight, shockwave and sparks all originate from it. */
   const caughtIndex = cast.findIndex((s) => s.id === caughtId)
-  const caughtSeat =
-    phase === 'caught' && caughtIndex >= 0 ? seatFor(caughtIndex, cast.length) : null
+  const caughtSlot = phase === 'caught' && caughtIndex >= 0 ? grid.at(caughtIndex) : null
 
-  const flags = (student, i) => {
-    const isSpot = student.id === spotlightId && phase === 'spinning'
-    const isCaught = student.id === caughtId && phase !== 'lobby'
-    return {
-      slot: seatFor(i, cast.length),
-      isSpot,
-      isCaught,
-      isFlying: launching && student.id === caughtId,
-      isAnswerer: student.id === answeredById,
-    }
-  }
+  // Size the name type so the LONGEST name on the feed fits its card.
+  // Empirically (Fredoka, bold) a character is ~0.62em wide.
+  const maxLen = Math.min(14, Math.max(6, ...cast.map((s) => displayName(s).length)))
+  const nameFs = Math.min((grid.card * 0.9) / (0.62 * maxLen), grid.card * 0.155)
 
   return (
     <div className="stage">
-      {/* .deck locks the same 3:2 box the room SVG renders into, so crew
-          percentage coordinates line up with the artwork at every size. */}
-      <div className={`deck${caughtSeat ? ' deck--punch' : ''}`}>
-        <LobbyRoom alarm={alarm} airlockOpen={airlockOpen} />
+      {/* .deck locks the 3:2 box the frame renders into, so card percentage
+          coordinates line up with the artwork at every size. */}
+      <div className={`deck${caughtSlot ? ' deck--punch' : ''}`}>
+        <FeedFrame
+          mode={mode}
+          alarm={alarm}
+          scrolling={phase === 'spinning'}
+          lost={phase === 'ejecting'}
+          online={onlineCount}
+        />
 
-        {/* Crew shrink as the class grows so 45 aboard still reads clearly. */}
-        <div
-          className="deck-layers"
-          style={(() => {
-            const pitch = seatPitch(cast.length)
-            // Size the type so the LONGEST name actually on deck fits the
-            // seat pitch. Empirically (Fredoka, semibold): one character is
-            // ~0.74em — measured against a 13-char two-word name with caps —
-            // plus 1.2em of pill padding. Clamped 6..14 chars so one
-            // silly-long name can't shrink the whole room to 8px.
-            const maxLen = Math.min(
-              14,
-              Math.max(6, ...cast.map((s) => displayName(s).length)),
-            )
-            return {
-              '--crew-w': `${crewScale(cast.length)}cqw`,
-              // Cap tag width at the seat pitch (less a gap) so neighbouring
-              // tags butt up but never overlap, whatever the names are.
-              '--tag-max': `${(pitch * 0.94).toFixed(2)}cqw`,
-              '--tag-fs': `clamp(8px, ${((pitch * 0.94) / (0.74 * maxLen + 1.2)).toFixed(3)}cqw, 19px)`,
-            }
-          })()}
-        >
-        {/* ---------- the catch: spotlight, shockwave, sparks ----------
-            Three separate siblings rather than one wrapper: each needs its own
-            z-index so the rings sit behind the caught crew member while the
-            sparks fly in front of them. A single positioned wrapper would trap
-            them all in one stacking context. */}
-        {caughtSeat && (
-          <>
-            {/* Everything but the culprit falls into shadow. */}
-            <div
-              className="fx-spot"
-              style={{ '--fx-x': `${caughtSeat.x}%`, '--fx-y': `${caughtSeat.y}%` }}
-            />
-            <div
-              className="fx-burst"
-              style={{ left: `${caughtSeat.x}%`, top: `${caughtSeat.y}%` }}
-            >
-              <span className="fx-glow" />
-              <span className="fx-ring" />
-              <span className="fx-ring fx-ring--2" />
-            </div>
-            <div
-              className="fx-sparks"
-              style={{ left: `${caughtSeat.x}%`, top: `${caughtSeat.y}%` }}
-            >
-              {Array.from({ length: 12 }, (_, s) => (
-                <span
-                  key={s}
-                  style={{
-                    '--a': `${s * 30 + (s % 3) * 7}deg`,
-                    '--d': `${7 + (s % 4) * 2.6}cqw`,
-                    '--sd': `${(s % 5) * 0.035}s`,
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* ---------- layer 1: artwork ---------- */}
-        <div className="crew-layer">
-          {cast.map((student, i) => {
-            const { slot, isSpot, isCaught, isFlying, isAnswerer } = flags(student, i)
-            const pos = isFlying ? AIRLOCK : slot
-
-            const cls = [
-              'crew',
-              isSpot && 'crew--spotlight',
-              isCaught && 'crew--caught',
-              isFlying && 'crew--flying',
-              isAnswerer && 'crew--answerer',
-              student.participated && 'crew--done',
-            ]
-              .filter(Boolean)
-              .join(' ')
-
-            return (
-              <div
-                key={student.id}
-                className={cls}
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  // Deterministic per-index offsets so the idle bob is not in lockstep.
-                  '--bob-delay': `${(i % 7) * 0.31}s`,
-                  '--bob-dur': `${3.1 + (i % 5) * 0.24}s`,
-                  // Top-down depth sort: crew lower on the deck draw in front.
-                  // Depth values reach ~90, so the spotlit/caught crew member
-                  // needs to clear that — but stay under the tag layer (200+).
-                  zIndex: isCaught || isSpot ? 150 : 5 + Math.round(slot.y),
-                }}
-                // In pick mode the character itself is tappable, but the tag
-                // below carries the accessible name — so this one is hidden
-                // from assistive tech to avoid a duplicate control.
-                onClick={pickMode ? () => onPick?.(student.id) : undefined}
-                aria-hidden="true"
-              >
-                <span className="crew-art">
-                  <CrewMember
-                    color={colorById(student.colorId)}
-                    state={isSpot ? 'alert' : 'idle'}
-                  />
-                </span>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* ---------- layer 2: name tags, always on top ----------
-            Hidden by default — with a full class the tags bury the room. Only
-            the spotlit / caught / answering crew member shows a name, unless
-            the teacher turns them all on or is picking a volunteer. */}
         <div
           className={[
-            'tag-layer',
-            pickMode && 'tag-layer--picking',
-            (showNames || pickMode) && 'tag-layer--names',
+            'deck-layers',
+            pickMode && 'deck-layers--picking',
+            showNames && 'deck-layers--names',
+            phase === 'spinning' && 'deck-layers--scrolling',
           ]
             .filter(Boolean)
             .join(' ')}
+          style={{
+            '--card-w': `${grid.card.toFixed(3)}cqw`,
+            '--name-fs': `clamp(8px, ${nameFs.toFixed(3)}cqw, 24px)`,
+          }}
         >
+          {/* ---------- the pick: spotlight, shockwave, sparks ----------
+              Three separate siblings rather than one wrapper: each needs its
+              own z-index so the rings sit behind the picked card while the
+              sparks fly in front of it. */}
+          {caughtSlot && (
+            <>
+              <div
+                className="fx-spot"
+                style={{ '--fx-x': `${caughtSlot.x}%`, '--fx-y': `${caughtSlot.y}%` }}
+              />
+              <div className="fx-burst" style={{ left: `${caughtSlot.x}%`, top: `${caughtSlot.y}%` }}>
+                <span className="fx-glow" />
+                <span className="fx-ring" />
+                <span className="fx-ring fx-ring--2" />
+              </div>
+              <div className="fx-sparks" style={{ left: `${caughtSlot.x}%`, top: `${caughtSlot.y}%` }}>
+                {Array.from({ length: 12 }, (_, s) => (
+                  <span
+                    key={s}
+                    style={{
+                      '--a': `${s * 30 + (s % 3) * 7}deg`,
+                      '--d': `${7 + (s % 4) * 2.6}cqw`,
+                      '--sd': `${(s % 5) * 0.035}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ---------- the cards ---------- */}
           {cast.map((student, i) => {
-            const { slot, isSpot, isCaught, isFlying, isAnswerer } = flags(student, i)
+            const slot = grid.at(i)
+            const isSpot = student.id === spotlightId && phase === 'spinning'
+            const isCaught = student.id === caughtId && phase !== 'lobby'
+            const isFlying = launching && student.id === caughtId
+            const isAnswerer = student.id === answeredById
+            const pos = isFlying ? SWIPE_OUT : slot
 
             const cls = [
-              'tag',
-              isSpot && 'tag--spotlight',
-              isCaught && 'tag--caught',
-              isFlying && 'tag--hidden',
-              isAnswerer && 'tag--answerer',
-              student.participated && 'tag--done',
+              'pcard',
+              isSpot && 'pcard--spotlight',
+              isCaught && 'pcard--caught',
+              isFlying && 'pcard--flying',
+              isAnswerer && 'pcard--answerer',
+              student.participated && 'pcard--done',
             ]
               .filter(Boolean)
               .join(' ')
-
-            const style = {
-              left: `${slot.x}%`,
-              top: `${slot.y}%`,
-              zIndex: isCaught || isSpot || isAnswerer ? 300 : 200 + Math.round(slot.y),
-            }
 
             const Tag = pickMode ? 'button' : 'div'
             const interactive = pickMode
@@ -217,56 +130,67 @@ export default function Lobby({
                   'aria-pressed': isAnswerer,
                   'aria-label': `Select ${displayName(student)} as the student who answered`,
                 }
-              : {}
+              : { 'aria-hidden': 'true' }
 
             return (
-              <Tag key={student.id} className={cls} style={style} {...interactive}>
-                {/* title as a safety net: a very long name still ellipsises in
-                    a big class, and hovering must always recover it in full. */}
-                <span className="tag-name" title={displayName(student)}>
-                  {displayName(student)}
-                  {/* Not while they're the one on the spot — the tick means
-                      "has had a turn", not a verdict on this round. */}
-                  {student.participated && !isCaught && !isSpot && (
-                    <span className="tag-tick" title="Already participated">
-                      ✓
-                    </span>
-                  )}
+              <Tag
+                key={student.id}
+                className={cls}
+                style={{
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
+                  // Deterministic per-index offsets so the idle float is not in lockstep.
+                  '--bob-delay': `${(i % 7) * 0.31}s`,
+                  '--bob-dur': `${3.4 + (i % 5) * 0.26}s`,
+                  zIndex: isCaught || isSpot ? 150 : isAnswerer ? 120 : 10,
+                }}
+                {...interactive}
+              >
+                <span className="pcard-avatar">
+                  <CrewMember color={colorById(student.colorId)} state={isSpot ? 'alert' : 'idle'} />
                 </span>
+                {/* title as a safety net: a very long name still ellipsises on a
+                    big wall, and hovering must always recover it in full. */}
+                <span className="pcard-name" title={displayName(student)}>
+                  {displayName(student)}
+                </span>
+                <span className="pcard-meta">
+                  {isCaught ? 'picked' : isAnswerer ? 'answering' : student.participated ? '✓ took part' : 'online'}
+                </span>
+                {isCaught && <span className="pcard-badge">1</span>}
               </Tag>
             )
           })}
         </div>
-        </div>
 
-        {/* Be honest that the room is a cast, not the whole class — otherwise
+        {/* Be honest that the feed is a cast, not the whole class — otherwise
             "why isn't my student in there?" looks like a bug. */}
-        {offDeck > 0 && (
-          <span className="off-deck" title={`${offDeck} more crew are in the pool but not seated`}>
-            +{offDeck} more in pool
+        {offFeed > 0 && (
+          <span className="off-deck" title={`${offFeed} more students are in the pool but not on the feed`}>
+            +{offFeed} more in pool
           </span>
         )}
       </div>
 
       {students.length === 0 && (
         <div className="stage-empty">
-          <strong>No crew aboard</strong>
+          <strong>Nobody on the feed</strong>
           <span>
             Add students in the <b>Roster</b> tab, or paste your whole class list
             at once.
           </span>
           <button className="btn btn--good stage-empty-btn" onClick={onLoadSample}>
-            ▶ Load sample crew
+            ▶ Load sample class
           </button>
         </div>
       )}
 
       {students.length > 0 && students.every((s) => s.ejected) && (
         <div className="stage-empty stage-empty--out">
-          <strong>The craft is empty</strong>
+          <strong>Everyone is logged out</strong>
           <span>
-            Every crew member has been ejected. Use <b>Reset progress</b> to bring
-            them all back aboard.
+            Every student has been logged out. Use <b>Reset progress</b> to bring
+            them all back online.
           </span>
         </div>
       )}
