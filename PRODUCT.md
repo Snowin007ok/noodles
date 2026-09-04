@@ -70,9 +70,12 @@ repeats until everyone has been drawn, verified by simulation) and stakes
 - The host controls everything from a side rail (tabs: Control, Roster,
   Questions, Status) and keyboard shortcuts; audio must only start from a host
   gesture (browser autoplay policy).
-- Real rosters are pasted in at session time and live only in that browser's
-  localStorage. The public repo and live site carry a fictional 45-name
-  sample roster.
+- The real roster (39 participants, final list from name_list.pdf,
+  2026-09-04) lives in a gitignored `roster.local.txt` on the host's laptop and
+  is baked into local builds only (`Start NOODLES.command` → localhost:4173,
+  works offline). The public repo and live site carry a fictional 45-name
+  sample roster. Pasting a list into the Roster tab still works as an override
+  in any browser.
 
 ## Capabilities and Constraints
 
