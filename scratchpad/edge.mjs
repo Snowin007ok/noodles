@@ -70,6 +70,9 @@ check('the rest are student rounds',
   x.rounds.filter(r => modeOf(x, r.number) === 'students').length === 7)
 check('questions are the session prompts verbatim',
   x.questions.every((q, i) => q.text === SAMPLE_QUESTIONS[i].text))
+check('examples ride along verbatim, blank where none was given',
+  x.questions.every((q, i) => q.example === (SAMPLE_QUESTIONS[i].example ?? ''))
+  && x.questions[0].example.length > 0 && x.questions[3].example === '')
 
 // --- 7. volunteer pick marks answered, but not when the algorithm picked someone
 let y = initialState()
@@ -209,6 +212,15 @@ let qmm = initialState()
 qmm = reducer(qmm, { type: 'question/mode', id: 'q1', mode: 'guest' })
 save(qmm)
 check('host-changed audience is left alone', load().questions[0].mode === 'guest')
+let qx = initialState()
+qx = reducer(qx, { type: 'question/example', id: 'q4', example: 'HOST EXAMPLE' })
+qx.questions = qx.questions.map((q, i) => (i === 0 ? (({ example, ...rest }) => rest)(q) : q)) // older save shape
+save(qx)
+const qxKept = load()
+check('host-added example survives reload and marks the deck custom',
+  qxKept.questions[3].example === 'HOST EXAMPLE' && qxKept.questionsSource === 'custom')
+check('custom deck missing an example falls back to the build example',
+  qxKept.questions[0].example === SAMPLE_QUESTIONS[0].example)
 localStorage.clear()
 
 const failed = results.filter(r => !r.pass)

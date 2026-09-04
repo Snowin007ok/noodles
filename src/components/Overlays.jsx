@@ -170,6 +170,13 @@ export function QuestionCard({
 
         <p className="takeover-question">{question?.text || '(no question set)'}</p>
 
+        {question?.example && (
+          <p className="takeover-example">
+            <span className="takeover-example-label">Example</span>
+            <span>{question.example}</span>
+          </p>
+        )}
+
         {/* Volunteer round, nobody tapped yet: the class as name chips. The host
             taps one; the audience reads it as "raise your hand". */}
         {needsVolunteer && (
