@@ -189,10 +189,24 @@ const kept = load()
 check('host-edited roster is left alone', kept.students[0].name === 'Host Edited' && kept.rosterSource === 'custom')
 let st = initialState()
 st.students = st.students.map((s, i) => (i === 0 ? { ...s, name: 'OLD BUILD NAME' } : s))
+const stId = st.students[0].id
+st = reducer(st, { type: 'student/eject', id: st.students[1].id })
 st = reducer(st, { type: 'round/reveal' }) // a round has started
 save(st)
 const started = load()
-check('started session keeps its roster even if untouched', started.students[0].name === 'OLD BUILD NAME')
+check('started session: a same-size list renames in place',
+  started.students[0].name === SAMPLE_STUDENTS[0] && started.students[0].id === stId)
+check('started session: ids, logouts and the deck survive the rename',
+  started.students[1].ejected === true && started.pool.length === st.pool.length
+  && started.students.length === st.students.length)
+let sz = initialState()
+sz.students = sz.students.slice(1) // a different class size
+sz.pool = sz.pool.filter((id) => id !== initialState().students[0].id)
+sz = reducer(sz, { type: 'round/reveal' })
+save(sz)
+const sized = load()
+check('started session: a different-size list is never swapped in',
+  sized.students.length === SAMPLE_STUDENTS.length - 1)
 localStorage.clear()
 
 // --- 17. a rebuilt question deck replaces untouched saved questions, never edited ones

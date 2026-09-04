@@ -209,13 +209,20 @@ export function load() {
     const differs =
       savedNames.length !== SAMPLE_STUDENTS.length ||
       savedNames.some((name, i) => name !== SAMPLE_STUDENTS[i])
-    if (untouched && nothingStarted && differs) {
+    if (untouched && differs && nothingStarted) {
       const students = SAMPLE_STUDENTS.map(makeStudent)
       merged.students = students
       merged.pool = buildPool(students.map((s) => s.id))
       merged.lastDrawn = null
       merged.caughtId = null
       merged.rosterSource = 'default'
+    } else if (untouched && differs && savedNames.length === SAMPLE_STUDENTS.length) {
+      /* Mid-session, same class size: only spellings changed. Rename in place
+         so ids, the deck, and who is logged out all survive. A class of a
+         different size is never swapped under a running session. */
+      merged.students = merged.students.map((s, i) =>
+        s.name === SAMPLE_STUDENTS[i] ? s : { ...s, name: SAMPLE_STUDENTS[i] },
+      )
     }
 
     return merged
