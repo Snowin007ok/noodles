@@ -92,6 +92,7 @@ export function initialState() {
     // baked-in class list); 'custom' the moment the host edits it. Lets a
     // rebuilt class list replace an untouched saved one — see load().
     rosterSource: 'default',
+    questionsSource: 'default',
     showNames: true,
     // How many cards are on the feed at once. The roster and the pool are
     // unaffected — a class of 45 still draws from all 45; the feed just shows
@@ -134,6 +135,11 @@ export function load() {
         mode: savedQ ? normalizeMode(savedQ.mode, savedQ.open) : q.mode,
       }
     })
+    /* The deck in the build is the source of truth until the host edits a
+       question in-app. A save that never touched them — including one from a
+       build before this flag existed — picks up a rebuilt deck on load. */
+    const questionsSource = saved.questionsSource === 'custom' ? 'custom' : 'default'
+    const deck = questionsSource === 'custom' ? questions : makeQuestions()
 
     /* Self-heal: a saved session with ZERO students has nothing worth
        restoring — it just strands the next visitor on an empty feed with an
@@ -142,7 +148,8 @@ export function load() {
     if (saved.students.length === 0) {
       return {
         ...base,
-        questions,
+        questions: deck,
+        questionsSource,
         audio: saved.audio ?? base.audio,
         reducedMotion: saved.reducedMotion ?? base.reducedMotion,
         showNames: saved.showNames ?? base.showNames,
@@ -152,7 +159,9 @@ export function load() {
 
     // Never restore mid-animation — a refresh should land in a stable lobby.
     const phase = saved.phase === 'spinning' ? 'lobby' : saved.phase
-    const merged = { ...base, ...saved, phase, spotlightId: null, spinTarget: null, questions }
+    const merged = {
+      ...base, ...saved, phase, spotlightId: null, spinTarget: null, questions: deck, questionsSource,
+    }
 
     merged.displayCap = num(merged.displayCap, base.displayCap, 0, 500)
     merged.currentRound = num(merged.currentRound, 1, 1, TOTAL_ROUNDS)
@@ -354,6 +363,7 @@ export function reducer(state, action) {
     case 'question/edit':
       return {
         ...state,
+        questionsSource: 'custom',
         questions: state.questions.map((q) =>
           q.id === action.id ? { ...q, text: action.text } : q,
         ),
@@ -364,6 +374,7 @@ export function reducer(state, action) {
       if (!MODES.includes(action.mode)) return state
       return {
         ...state,
+        questionsSource: 'custom',
         questions: state.questions.map((q) =>
           q.id === action.id ? { ...q, mode: action.mode } : q,
         ),

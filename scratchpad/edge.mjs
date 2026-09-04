@@ -155,9 +155,9 @@ const m = load()
 check('legacy save migrates without NaN',
   Number.isFinite(m.displayCap) && Number.isFinite(m.audio.volume) && Number.isFinite(m.currentRound)
   && m.students[0].ejected === false && Number.isFinite(m.students[0].timesSelected))
-check('legacy open flag -> volunteer mode', m.questions[1].mode === 'volunteer' && m.questions[0].mode === 'students')
-check('legacy text kept, missing slots filled', m.questions[0].text === 'OLD ONE' && m.questions.length === 10
-  && m.questions[9].text === SAMPLE_QUESTIONS[9].text)
+check('legacy questions (no source flag) refresh from the build deck',
+  m.questions.length === 10 && m.questions[0].text === SAMPLE_QUESTIONS[0].text
+  && m.questions[1].mode === 'guest' && m.questionsSource === 'default')
 check('legacy rounds padded to ten', m.rounds.length === 10 && m.rounds[0].status === 'answered')
 localStorage.clear()
 
@@ -190,6 +190,25 @@ st = reducer(st, { type: 'round/reveal' }) // a round has started
 save(st)
 const started = load()
 check('started session keeps its roster even if untouched', started.students[0].name === 'OLD BUILD NAME')
+localStorage.clear()
+
+// --- 17. a rebuilt question deck replaces untouched saved questions, never edited ones
+let qa = initialState()
+qa.questions = qa.questions.map((q, i) => (i === 0 ? { ...q, text: 'OLD BUILD QUESTION' } : q))
+qa = reducer(qa, { type: 'round/reveal' }) // even mid-session: untouched text is display content
+save(qa)
+const qNew = load()
+check('untouched saved questions adopt the new build deck',
+  qNew.questions[0].text === SAMPLE_QUESTIONS[0].text && qNew.questionsSource === 'default', qNew.questions[0].text)
+let qe = initialState()
+qe = reducer(qe, { type: 'question/edit', id: 'q1', text: 'HOST QUESTION' })
+save(qe)
+const qKept = load()
+check('host-edited question text is left alone', qKept.questions[0].text === 'HOST QUESTION' && qKept.questionsSource === 'custom')
+let qmm = initialState()
+qmm = reducer(qmm, { type: 'question/mode', id: 'q1', mode: 'guest' })
+save(qmm)
+check('host-changed audience is left alone', load().questions[0].mode === 'guest')
 localStorage.clear()
 
 const failed = results.filter(r => !r.pass)

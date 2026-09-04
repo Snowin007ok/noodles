@@ -168,14 +168,14 @@ export const HAS_LOCAL_ROSTER = LOCAL_ROSTER.length > 0
    Every field is editable in the Questions tab; this is only the starting
    deck. */
 export const SAMPLE_QUESTIONS = [
-  { mode: 'students', text: 'What is one thing the internet taught you outside the classroom?' },
-  { mode: 'guest', text: 'What workplace habit has technology completely changed for you?' },
-  { mode: 'students', text: 'Are we creating memories — or just recording them?' },
-  { mode: 'guest', text: 'Are we using technology to express ourselves, or are algorithms influencing who we become?' },
-  { mode: 'students', text: 'When did scrolling last change your mood?' },
-  { mode: 'volunteer', text: 'What would you miss first during a day without your phone?' },
-  { mode: 'students', text: 'Has instant information made us curious — or impatient?' },
-  { mode: 'students', text: 'Has technology helped us express ourselves — or made us follow everyone else?' },
-  { mode: 'students', text: 'What old-school habit should our generation bring back?' },
-  { mode: 'students', text: 'In an AI-powered future, what should always remain human?' },
+  { mode: 'students', text: 'One thing the internet taught you outside the classroom.' },
+  { mode: 'guest', text: 'A workplace habit that technology has completely changed for you.' },
+  { mode: 'students', text: 'Are we creating memories or just recording them?' },
+  { mode: 'guest', text: 'Has technology made work easier, or has it increased the expectation to do more and stay available beyond working hours?' },
+  { mode: 'students', text: 'Has scrolling ever changed your mood? If yes, share a recent example.' },
+  { mode: 'volunteer', text: 'What would you miss the most if you had no phone for one day?' },
+  { mode: 'students', text: 'Has instant access to information made us more curious or less patient?' },
+  { mode: 'students', text: 'What is one old-school habit our generation should bring back? Why?' },
+  { mode: 'students', text: 'What is one human quality that AI should never replace? Why?' },
+  { mode: 'students', text: 'Think about your online feed. How has it influenced what you watch, buy or believe?' },
 ]
