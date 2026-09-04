@@ -150,11 +150,6 @@ function ControlTab({ state, dispatch, actions, clock }) {
         <p className="card-q">
           {round.revealed ? question?.text : '••••••  hidden until revealed  ••••••'}
         </p>
-        {round.revealed && question?.example && (
-          <p className="card-example">
-            <em>Example</em> {question.example}
-          </p>
-        )}
       </div>
 
       {mode === 'guest' && (
@@ -469,16 +464,6 @@ function QuestionsTab({ state, dispatch }) {
                 onChange={(e) => dispatch({ type: 'question/edit', id: q.id, text: e.target.value })}
                 aria-label={`Question ${q.number}`}
                 rows={3}
-              />
-              <input
-                className="qexample"
-                type="text"
-                value={q.example ?? ''}
-                onChange={(e) =>
-                  dispatch({ type: 'question/example', id: q.id, example: e.target.value })
-                }
-                aria-label={`Example for question ${q.number}`}
-                placeholder="Example (optional) — shown under the question"
               />
             </div>
           </li>
