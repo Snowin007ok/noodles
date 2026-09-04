@@ -34,6 +34,18 @@ npm run build && npm run preview
 Fonts are bundled locally (Fredoka + Nunito via `@fontsource`), so there are no
 CDN calls and the app runs fully offline — which matters in a classroom.
 
+### On the host's laptop (no internet needed)
+
+Double-click **`Start NOODLES.command`** in the project folder. It builds once
+if needed, serves the game at http://localhost:4173 and opens your browser.
+Leave the Terminal window open while presenting; close it to stop. (First time
+only, macOS may ask you to right-click → Open.)
+
+Put the real class list in a file called **`roster.local.txt`** next to
+`package.json`, one name per line. It is gitignored, so it is baked into builds
+made on this laptop only — the public GitHub Pages build never sees it and
+keeps the fictional sample roster.
+
 Run the selection-fairness and edge-case suites:
 
 ```bash

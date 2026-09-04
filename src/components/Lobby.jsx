@@ -1,6 +1,6 @@
 import StreetScene from './StreetScene'
 import NameReel from './NameReel'
-import { ERAS } from '../game/constants'
+import { ERAS, HAS_LOCAL_ROSTER } from '../game/constants'
 
 /** Where the reel window sits on the deck, in percent — the pick FX fire here. */
 const REEL_CENTER = { x: 50, y: 56 }
@@ -90,7 +90,7 @@ export default function Lobby({
             at once.
           </span>
           <button className="btn btn--good stage-empty-btn" onClick={onLoadSample}>
-            ▶ Load sample class
+            ▶ {HAS_LOCAL_ROSTER ? 'Load the class list' : 'Load sample class'}
           </button>
         </div>
       )}

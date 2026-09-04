@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.local
 .claude/settings.local.json
+
+# the real class list — baked into local builds only, never committed
+roster.local.txt

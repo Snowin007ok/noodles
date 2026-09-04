@@ -208,27 +208,6 @@ export default function StreetScene({ alarm, lost }) {
           <rect x="794" y="366" width="32" height="18" rx="4" fill="#f2b134" stroke={INK} strokeWidth="3" />
         </g>
 
-        {/* bunting strung across the whole street: the two worlds share it */}
-        <g className="bunting">
-          <path d="M40 300q560 90 1120 0" fill="none" stroke={INK} strokeWidth="3" />
-          {Array.from({ length: 22 }, (_, i) => {
-            const t = (i + 0.5) / 22
-            const x = 40 + t * 1120
-            const y = 300 + 90 * 4 * t * (1 - t) * 1.0
-            const colors = ['#d9563a', '#f2b134', '#2ab3a6', '#7bb661', '#9a6fb5', '#ef8b3b']
-            return (
-              <polygon
-                key={i}
-                points={`${x - 11},${y} ${x + 11},${y} ${x},${y + 24}`}
-                fill={colors[i % colors.length]}
-                stroke={INK}
-                strokeWidth="2.5"
-                strokeLinejoin="round"
-              />
-            )
-          })}
-        </g>
-
         {/* ================= BUILDINGS — NEW SIDE ================= */}
         {/* Café */}
         <g>

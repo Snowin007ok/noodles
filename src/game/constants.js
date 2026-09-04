@@ -142,9 +142,10 @@ export const CREW_COLORS = [
 
 export const colorFor = (index) => CREW_COLORS[index % CREW_COLORS.length]
 
-/* Fictional placeholder roster — replace via Roster → paste. Real class lists
-   belong in the app (localStorage), never committed to a public repo. */
-export const SAMPLE_STUDENTS = [
+/* Fictional placeholder roster. Real class lists never go into the public
+   repo: a gitignored roster.local.txt next to vite.config.js is baked into a
+   LOCAL build instead (see vite.config.js), and overrides this list there. */
+const FICTIONAL_STUDENTS = [
   'Aarav', 'Abinaya', 'Adhvik', 'Akilan', 'Amudha', 'Anitha Sri',
   'Balaji', 'Bhuvana', 'Chandran', 'Deepan', 'Devika', 'Dhanush',
   'Elakkiya', 'Ezhil', 'Gautham', 'Gowri Shree', 'Hariharan', 'Ilamathi',
@@ -154,6 +155,14 @@ export const SAMPLE_STUDENTS = [
   'Rajesh', 'Sabari', 'Selvi', 'Senthil', 'Thamizh', 'Uma Bharathi',
   'Vasanth', 'Vennila', 'Yuvan',
 ]
+
+// eslint-disable-next-line no-undef
+const LOCAL_ROSTER = typeof __LOCAL_ROSTER__ !== 'undefined' ? __LOCAL_ROSTER__ : []
+
+export const SAMPLE_STUDENTS = LOCAL_ROSTER.length ? LOCAL_ROSTER : FICTIONAL_STUDENTS
+
+/** True when this build carries a real class list rather than the sample. */
+export const HAS_LOCAL_ROSTER = LOCAL_ROSTER.length > 0
 
 /* The session's ten prompts, each with the audience it is addressed to.
    Every field is editable in the Questions tab; this is only the starting
