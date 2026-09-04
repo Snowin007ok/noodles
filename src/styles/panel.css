@@ -919,3 +919,26 @@ select:focus {
 .app--presenter .hud {
   font-size: clamp(0.9rem, 1.2vw, 1.25rem);
 }
+
+/* Optional example under a question: Control-tab preview and Questions-tab field */
+.card-example {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.card-example em {
+  margin-right: 4px;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.qexample {
+  width: 100%;
+  font-size: 0.8rem;
+}

@@ -58,6 +58,8 @@ function makeQuestions() {
     number: i + 1,
     text: q.text,
     mode: q.mode,
+    // Optional worked example shown under the question on the takeover.
+    example: q.example ?? '',
   }))
 }
 
@@ -133,6 +135,7 @@ export function load() {
         ...q,
         text: typeof savedQ?.text === 'string' ? savedQ.text : q.text,
         mode: savedQ ? normalizeMode(savedQ.mode, savedQ.open) : q.mode,
+        example: typeof savedQ?.example === 'string' ? savedQ.example : q.example,
       }
     })
     /* The deck in the build is the source of truth until the host edits a
@@ -377,6 +380,16 @@ export function reducer(state, action) {
         questionsSource: 'custom',
         questions: state.questions.map((q) =>
           q.id === action.id ? { ...q, mode: action.mode } : q,
+        ),
+      }
+
+    /** The optional example under a question; blank hides it. */
+    case 'question/example':
+      return {
+        ...state,
+        questionsSource: 'custom',
+        questions: state.questions.map((q) =>
+          q.id === action.id ? { ...q, example: action.example } : q,
         ),
       }
 

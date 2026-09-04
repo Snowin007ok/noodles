@@ -168,14 +168,40 @@ export const HAS_LOCAL_ROSTER = LOCAL_ROSTER.length > 0
    Every field is editable in the Questions tab; this is only the starting
    deck. */
 export const SAMPLE_QUESTIONS = [
-  { mode: 'students', text: 'One thing the internet taught you outside the classroom.' },
-  { mode: 'guest', text: 'A workplace habit that technology has completely changed for you.' },
-  { mode: 'students', text: 'Are we creating memories or just recording them?' },
-  { mode: 'guest', text: 'Has technology made work easier, or has it increased the expectation to do more and stay available beyond working hours?' },
+  {
+    mode: 'students',
+    text: 'One thing the internet taught you outside the classroom.',
+    example: 'Learning a skill through YouTube.',
+  },
+  {
+    mode: 'guest',
+    text: 'A workplace habit that technology has completely changed for you.',
+    example: 'Meetings moving from conference rooms to video calls.',
+  },
+  {
+    mode: 'students',
+    text: 'Are we creating memories or just recording them?',
+    example: 'Watching a concert through your phone camera.',
+  },
+  {
+    mode: 'guest',
+    text: 'Has technology made work easier, or has it increased the expectation to do more and stay available beyond working hours?',
+  },
   { mode: 'students', text: 'Has scrolling ever changed your mood? Share a recent experience.' },
   { mode: 'volunteer', text: 'What would you miss the most if you had no phone for one day?' },
-  { mode: 'students', text: 'Has instant access to information made us more curious or less patient?' },
-  { mode: 'students', text: 'What is one old-school habit our generation should bring back? Why?' },
+  {
+    mode: 'students',
+    text: 'Has instant access to information made us more curious or less patient?',
+    example: 'Searching for an instant answer instead of trying to work it out.',
+  },
+  {
+    mode: 'students',
+    text: 'What is one old-school habit our generation should bring back? Why?',
+    example: 'Having conversations without checking our phones.',
+  },
   { mode: 'students', text: 'What is one human quality that AI should never replace? Why?' },
-  { mode: 'students', text: 'Think about your online feed. How has it influenced what you watch, buy or believe?' },
+  {
+    mode: 'students',
+    text: 'Think about your online feed. How has it influenced what you watch, buy or believe?',
+  },
 ]
