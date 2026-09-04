@@ -1,5 +1,5 @@
 import { reducer, initialState, displayName, save, load, modeOf } from '../src/game/state.js'
-import { TOTAL_ROUNDS, SAMPLE_QUESTIONS } from '../src/game/constants.js'
+import { TOTAL_ROUNDS, SAMPLE_QUESTIONS, SAMPLE_STUDENTS } from '../src/game/constants.js'
 
 // Minimal localStorage shim so save()/load() are testable in Node.
 globalThis.localStorage = (() => {
@@ -168,6 +168,28 @@ check('spin/start stores the reel target', sp.spinTarget === sp.students[4].id &
 save(sp)
 const reloaded = load()
 check('reload lands in the lobby with no target', reloaded.phase === 'lobby' && reloaded.spinTarget === null)
+localStorage.clear()
+
+// --- 16. a rebuilt class list replaces an untouched saved roster, never an edited one
+let rb = initialState()
+rb.students = rb.students.map((s, i) => (i === 0 ? { ...s, name: 'OLD BUILD NAME' } : s)) // pretend the build changed
+save(rb)
+const refreshed = load()
+check('untouched saved roster adopts the new build list',
+  refreshed.students[0].name === SAMPLE_STUDENTS[0],
+  refreshed.students[0].name)
+check('adopted roster rebuilds the pool', refreshed.pool.length === refreshed.students.length)
+let cu = initialState()
+cu = reducer(cu, { type: 'student/rename', id: cu.students[0].id, name: 'Host Edited' })
+save(cu)
+const kept = load()
+check('host-edited roster is left alone', kept.students[0].name === 'Host Edited' && kept.rosterSource === 'custom')
+let st = initialState()
+st.students = st.students.map((s, i) => (i === 0 ? { ...s, name: 'OLD BUILD NAME' } : s))
+st = reducer(st, { type: 'round/reveal' }) // a round has started
+save(st)
+const started = load()
+check('started session keeps its roster even if untouched', started.students[0].name === 'OLD BUILD NAME')
 localStorage.clear()
 
 const failed = results.filter(r => !r.pass)

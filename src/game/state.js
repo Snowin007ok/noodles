@@ -88,8 +88,10 @@ export function initialState() {
     caughtId: null, // student locked in for this round
     audio: { enabled: true, volume: 0.8 },
     reducedMotion: false,
-    // Names live on the cards in the feed, so they are on by default; the
-    // toggle remains for a host who wants a cleaner wall.
+    // 'default' while the roster is still the build's own list (sample or the
+    // baked-in class list); 'custom' the moment the host edits it. Lets a
+    // rebuilt class list replace an untouched saved one — see load().
+    rosterSource: 'default',
     showNames: true,
     // How many cards are on the feed at once. The roster and the pool are
     // unaffected — a class of 45 still draws from all 45; the feed just shows
@@ -184,6 +186,26 @@ export function load() {
     })
     merged.pool = Array.isArray(merged.pool) ? merged.pool : []
 
+    /* The class list changed in the build (roster.local.txt edited, rebuilt)
+       but this browser still holds the OLD default list from before. If the
+       host never edited the roster by hand and no round has started, adopt the
+       new list silently — a name fix in the file should never need a manual
+       reset in every browser. Anything the host touched is left alone. */
+    const untouched = merged.rosterSource !== 'custom'
+    const nothingStarted = merged.rounds.every((r) => r.status === 'pending' && !r.revealed)
+    const savedNames = merged.students.map((s) => s.name)
+    const differs =
+      savedNames.length !== SAMPLE_STUDENTS.length ||
+      savedNames.some((name, i) => name !== SAMPLE_STUDENTS[i])
+    if (untouched && nothingStarted && differs) {
+      const students = SAMPLE_STUDENTS.map(makeStudent)
+      merged.students = students
+      merged.pool = buildPool(students.map((s) => s.id))
+      merged.lastDrawn = null
+      merged.caughtId = null
+      merged.rosterSource = 'default'
+    }
+
     return merged
   } catch {
     return initialState()
@@ -223,6 +245,7 @@ export function reducer(state, action) {
       const students = [...state.students, student]
       return {
         ...state,
+        rosterSource: 'custom',
         students,
         pool: reconcilePool(
           state.pool,
@@ -262,6 +285,7 @@ export function reducer(state, action) {
       const ids = students.map((s) => s.id)
       return {
         ...state,
+        rosterSource: 'custom',
         students,
         pool: reconcilePool(
           state.pool.filter((id) => ids.includes(id)),
@@ -281,7 +305,10 @@ export function reducer(state, action) {
     /** Keeps the raw text so the field stays editable mid-typing; a name that
      *  is blank when it matters falls back to a placeholder at render time. */
     case 'student/rename':
-      return patchStudent(state, action.id, () => ({ name: action.name.slice(0, 40) }))
+      return {
+        ...patchStudent(state, action.id, () => ({ name: action.name.slice(0, 40) })),
+        rosterSource: 'custom',
+      }
 
     case 'student/color':
       return patchStudent(state, action.id, () => ({ colorId: action.colorId }))
@@ -291,6 +318,7 @@ export function reducer(state, action) {
       const ids = students.map((s) => s.id)
       return {
         ...state,
+        rosterSource: 'custom',
         students,
         pool: state.pool.filter((id) => ids.includes(id)),
         caughtId: state.caughtId === action.id ? null : state.caughtId,
@@ -309,6 +337,7 @@ export function reducer(state, action) {
       const students = SAMPLE_STUDENTS.map(makeStudent)
       return {
         ...state,
+        rosterSource: 'default',
         students,
         pool: buildPool(students.map((s) => s.id)),
         lastDrawn: null,
